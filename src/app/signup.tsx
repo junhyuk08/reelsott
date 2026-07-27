@@ -63,8 +63,10 @@ export default function SignupScreen() {
 
     if (data.session) {
       // Email confirmation is disabled for this project, so signUp already
-      // returned an active session — there's no confirmation email to wait for.
-      router.replace('/');
+      // returned an active session. Sign back out so the user has to log in
+      // deliberately rather than landing in the app already authenticated.
+      await supabase.auth.signOut();
+      router.replace('/login');
       return;
     }
 
