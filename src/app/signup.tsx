@@ -18,6 +18,15 @@ import { supabase } from '@/lib/supabase';
 const PASSWORD_REGEX = /^(?=.*[A-Za-z])(?=.*\d)(?=.*[!@#$%^&*])[A-Za-z\d!@#$%^&*]{8,}$/;
 const ACCENT = '#FF3B5C';
 
+const KNOWN_ERROR_MESSAGES: Record<string, string> = {
+  user_already_exists: '이미 가입된 이메일입니다.',
+  email_exists: '이미 가입된 이메일입니다.',
+};
+
+function toKoreanError(code: string | undefined, fallback: string) {
+  return (code && KNOWN_ERROR_MESSAGES[code]) || fallback;
+}
+
 type PasswordCheckResult = {
   type: 'error' | 'success';
   message: string;
@@ -90,7 +99,7 @@ export default function SignupScreen() {
     setError(null);
     setSubmitting(true);
 
-    const { error: signupError } = await supabase.auth.signUp({
+    const { data, error: signupError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -101,7 +110,14 @@ export default function SignupScreen() {
     setSubmitting(false);
 
     if (signupError) {
-      setError(signupError.message);
+      setError(toKoreanError(signupError.code, signupError.message));
+      return;
+    }
+
+    if (data.session) {
+      // Email confirmation is disabled for this project, so signUp already
+      // returned an active session — there's no confirmation email to wait for.
+      router.replace('/');
       return;
     }
 
