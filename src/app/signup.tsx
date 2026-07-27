@@ -46,7 +46,7 @@ export default function SignupScreen() {
     setError(null);
     setSubmitting(true);
 
-    const { error: signupError } = await supabase.auth.signUp({
+    const { data, error: signupError } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -58,6 +58,13 @@ export default function SignupScreen() {
 
     if (signupError) {
       setError(toKoreanError(signupError.code, signupError.message));
+      return;
+    }
+
+    if (data.session) {
+      // Email confirmation is disabled for this project, so signUp already
+      // returned an active session — there's no confirmation email to wait for.
+      router.replace('/');
       return;
     }
 
