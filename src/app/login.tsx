@@ -64,7 +64,7 @@ export default function LoginScreen() {
       return;
     }
 
-    router.replace('/index');
+    router.replace('/');
   }
 
   return (
