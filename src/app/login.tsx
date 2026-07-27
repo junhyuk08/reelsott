@@ -1,7 +1,13 @@
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Pressable, StyleSheet, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  TextInput,
+} from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -10,6 +16,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ACCENT = '#FF3B5C';
 
 export default function LoginScreen() {
   const theme = useTheme();
@@ -57,100 +64,129 @@ export default function LoginScreen() {
       return;
     }
 
-    router.replace('/');
+    router.replace('/index');
   }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title" style={styles.centerText}>
-          로그인
-        </ThemedText>
-
-        <ThemedView style={styles.form}>
-          <TextInput
-            placeholder="이메일 또는 닉네임"
-            placeholderTextColor={theme.textSecondary}
-            value={identifier}
-            onChangeText={setIdentifier}
-            autoCapitalize="none"
-            autoComplete="username"
-            style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected }]}
-          />
-          <TextInput
-            placeholder="비밀번호"
-            placeholderTextColor={theme.textSecondary}
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            autoComplete="password"
-            style={[styles.input, { color: theme.text, borderColor: theme.backgroundSelected }]}
-          />
-
-          {error && (
-            <ThemedText type="small" style={styles.error}>
-              {error}
+    <ThemedView style={styles.flex}>
+      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+          <ThemedView style={styles.logoArea}>
+            <ThemedText style={styles.logoEmoji}>🎬</ThemedText>
+            <ThemedText type="subtitle" style={styles.title}>
+              다시 만나서 반가워요
             </ThemedText>
-          )}
-
-          <Pressable
-            onPress={handleLogin}
-            disabled={submitting}
-            style={[styles.primaryButton, submitting && styles.disabled]}>
-            <ThemedText type="default" style={styles.buttonLabel}>
-              {submitting ? '로그인 중...' : '로그인'}
+            <ThemedText type="small" themeColor="textSecondary" style={styles.subtitle}>
+              이메일 또는 닉네임으로 로그인하고 이어보기를 시작하세요
             </ThemedText>
-          </Pressable>
-        </ThemedView>
+          </ThemedView>
 
-        <ThemedText type="small" themeColor="textSecondary" style={styles.centerText}>
-          계정이 없으신가요?{' '}
-          <Link href="/signup">
-            <ThemedText type="linkPrimary">회원가입</ThemedText>
+          <ThemedView style={styles.card}>
+            <TextInput
+              style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
+              placeholder="이메일 또는 닉네임"
+              placeholderTextColor={theme.textSecondary}
+              value={identifier}
+              onChangeText={setIdentifier}
+              autoCapitalize="none"
+              autoComplete="username"
+            />
+            <TextInput
+              style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
+              placeholder="비밀번호"
+              placeholderTextColor={theme.textSecondary}
+              value={password}
+              onChangeText={setPassword}
+              secureTextEntry
+              autoComplete="password"
+            />
+
+            {error && (
+              <ThemedText type="small" style={styles.errorText}>
+                {error}
+              </ThemedText>
+            )}
+
+            <Pressable
+              onPress={handleLogin}
+              disabled={submitting}
+              style={[styles.loginButton, submitting && styles.disabled]}>
+              <ThemedText style={styles.loginButtonText}>
+                {submitting ? '로그인 중...' : '로그인'}
+              </ThemedText>
+            </Pressable>
+          </ThemedView>
+
+          <Link href="/signup" style={styles.signupLink}>
+            <ThemedText type="small" themeColor="textSecondary">
+              계정이 없으신가요? <ThemedText type="smallBold" style={styles.signupLinkAccent}>회원가입</ThemedText>
+            </ThemedText>
           </Link>
-        </ThemedText>
-      </SafeAreaView>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  flex: {
     flex: 1,
   },
-  safeArea: {
-    flex: 1,
+  scrollContent: {
+    flexGrow: 1,
     justifyContent: 'center',
-    gap: Spacing.four,
     paddingHorizontal: Spacing.four,
+    paddingVertical: Spacing.five,
   },
-  centerText: {
+  logoArea: {
+    alignItems: 'center',
+    marginBottom: Spacing.five,
+  },
+  logoEmoji: {
+    fontSize: 44,
+    marginBottom: Spacing.two,
+  },
+  title: {
     textAlign: 'center',
   },
-  form: {
-    gap: Spacing.three,
+  subtitle: {
+    marginTop: Spacing.half,
+    textAlign: 'center',
+  },
+  card: {
+    gap: Spacing.two,
   },
   input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
+    borderRadius: Spacing.three,
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three,
+    paddingVertical: Spacing.three - 1,
     fontSize: 16,
   },
-  primaryButton: {
-    backgroundColor: '#3c87f7',
-    borderRadius: Spacing.two,
+  loginButton: {
+    backgroundColor: ACCENT,
+    borderRadius: Spacing.three,
     paddingVertical: Spacing.three,
     alignItems: 'center',
     marginTop: Spacing.one,
+    boxShadow: '0 6px 10px rgba(255, 59, 92, 0.25)',
   },
   disabled: {
     opacity: 0.5,
   },
-  buttonLabel: {
+  loginButtonText: {
     color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
   },
-  error: {
-    color: '#e5484d',
+  errorText: {
+    color: '#D33',
+    textAlign: 'center',
+  },
+  signupLink: {
+    marginTop: Spacing.five,
+    alignSelf: 'center',
+  },
+  signupLinkAccent: {
+    color: ACCENT,
   },
 });
