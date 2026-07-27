@@ -9,6 +9,15 @@ import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
 
+const KNOWN_ERROR_MESSAGES: Record<string, string> = {
+  user_already_exists: '이미 가입된 이메일입니다.',
+  email_exists: '이미 가입된 이메일입니다.',
+};
+
+function toKoreanError(code: string | undefined, fallback: string) {
+  return (code && KNOWN_ERROR_MESSAGES[code]) || fallback;
+}
+
 export default function SignupScreen() {
   const theme = useTheme();
   const router = useRouter();
@@ -48,7 +57,7 @@ export default function SignupScreen() {
     setSubmitting(false);
 
     if (signupError) {
-      setError(signupError.message);
+      setError(toKoreanError(signupError.code, signupError.message));
       return;
     }
 
