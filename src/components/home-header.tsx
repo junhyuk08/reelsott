@@ -13,22 +13,29 @@ const ACCENT = '#FF3B5C';
 export function HomeHeader() {
   const theme = useTheme();
   const router = useRouter();
-  const { isLoggedIn } = useSession();
+  const { session, isLoggedIn } = useSession();
 
   async function handleLogout() {
     await supabase.auth.signOut();
   }
+
+  const displayName = (session?.user.user_metadata?.nickname as string | undefined) ?? session?.user.email;
 
   return (
     <View style={styles.container}>
       <Logo />
 
       {isLoggedIn ? (
-        <Pressable onPress={handleLogout} style={[styles.pillButton, { borderColor: theme.backgroundSelected }]}>
-          <ThemedText type="small" themeColor="textSecondary">
-            로그아웃
+        <View style={styles.loggedInArea}>
+          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} style={styles.greeting}>
+            {displayName}님
           </ThemedText>
-        </Pressable>
+          <Pressable onPress={handleLogout} style={[styles.pillButton, { borderColor: theme.backgroundSelected }]}>
+            <ThemedText type="small" themeColor="textSecondary">
+              로그아웃
+            </ThemedText>
+          </Pressable>
+        </View>
       ) : (
         <View style={styles.authButtons}>
           <Pressable onPress={() => router.push('/login')} style={[styles.pillButton, { borderColor: theme.backgroundSelected }]}>
@@ -58,6 +65,15 @@ const styles = StyleSheet.create({
   authButtons: {
     flexDirection: 'row',
     gap: Spacing.one,
+  },
+  loggedInArea: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+    flexShrink: 1,
+  },
+  greeting: {
+    flexShrink: 1,
   },
   pillButton: {
     borderWidth: 1,
