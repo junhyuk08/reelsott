@@ -1,4 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -7,17 +8,21 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useDrama } from '@/hooks/use-dramas';
-import { useEpisodes } from '@/hooks/use-episodes';
+import { useEpisodes, type Episode } from '@/hooks/use-episodes';
+import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
 
 const ACCENT = '#FF3B5C';
+const EPISODE_COIN_COST = 30;
 
 export default function DramaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const theme = useTheme();
+  const { isLoggedIn } = useSession();
   const { drama, loading: dramaLoading, error: dramaError } = useDrama(id);
-  const { episodes, loading: episodesLoading } = useEpisodes(id);
+  const { episodes, unlockedIds, loading: episodesLoading, unlockEpisode } = useEpisodes(id);
+  const [unlockingId, setUnlockingId] = useState<string | null>(null);
 
   if (dramaLoading || episodesLoading) return null;
 
@@ -35,9 +40,30 @@ export default function DramaDetailScreen() {
   }
 
   const dramaTitle = drama.title;
+  const freeEpisodeCount = drama.freeEpisodeCount;
 
-  function handlePressLocked() {
-    Alert.alert('잠금 해제', '코인으로 잠금 해제하는 기능은 곧 추가될 예정이에요.');
+  function isLocked(episode: Episode) {
+    return episode.episodeNumber > freeEpisodeCount && !unlockedIds.has(episode.id);
+  }
+
+  async function handlePressLocked(episode: Episode) {
+    if (!isLoggedIn) {
+      Alert.alert('로그인이 필요합니다.');
+      return;
+    }
+
+    setUnlockingId(episode.id);
+    const result = await unlockEpisode(episode.id);
+    setUnlockingId(null);
+
+    if (!result.success) {
+      Alert.alert('잠금 해제 실패', result.error);
+      return;
+    }
+
+    if (episode.videoUrl) {
+      handlePressPlay(episode.id, episode.episodeNumber, episode.videoUrl);
+    }
   }
 
   function handlePressPlay(episodeId: string, episodeNumber: number, videoUrl: string) {
@@ -76,6 +102,7 @@ export default function DramaDetailScreen() {
           }
           renderItem={({ item: episode, index }) => {
             const videoUrl = episode.videoUrl;
+            const locked = isLocked(episode);
             return (
               <View
                 style={[
@@ -84,10 +111,13 @@ export default function DramaDetailScreen() {
                   index === 0 && styles.episodeRowFirst,
                 ]}>
                 <ThemedText type="default">{episode.episodeNumber}화</ThemedText>
-                {episode.isLocked ? (
-                  <Pressable onPress={handlePressLocked} style={styles.lockButton}>
+                {locked ? (
+                  <Pressable
+                    onPress={() => handlePressLocked(episode)}
+                    disabled={unlockingId === episode.id}
+                    style={styles.lockButton}>
                     <ThemedText type="small" themeColor="textSecondary">
-                      🔒 코인으로 잠금 해제
+                      {unlockingId === episode.id ? '해제 중...' : `🔒 ${EPISODE_COIN_COST}코인으로 잠금 해제`}
                     </ThemedText>
                   </Pressable>
                 ) : videoUrl ? (
