@@ -15,6 +15,7 @@ export function useDramas() {
       const { data, error: fetchError } = await supabase
         .from('dramas')
         .select('id, title, thumbnail_url, genre, episode_count, is_new, view_count')
+        .eq('is_published', true)
         .order('created_at', { ascending: true });
 
       if (cancelled) return;

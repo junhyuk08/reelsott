@@ -10,7 +10,14 @@ import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
 
-const MENU_ITEMS = ['구독 관리', '알림 설정', '고객센터', '이용약관'];
+const MENU_ITEMS = [
+  { label: '찜한 작품', href: '/favorites' as const },
+  { label: '시청기록', href: '/watch-history' as const },
+  { label: '구독 관리', href: null },
+  { label: '알림 설정', href: null },
+  { label: '고객센터', href: null },
+  { label: '이용약관', href: null },
+];
 
 async function extractErrorMessage(error: unknown, fallback: string) {
   const context = (error as { context?: Response })?.context;
@@ -86,15 +93,17 @@ export default function MyPageScreen() {
 
         <ThemedView style={styles.menuList}>
           {MENU_ITEMS.map((item, index) => (
-            <ThemedView
-              key={item}
+            <Pressable
+              key={item.label}
+              disabled={!item.href}
+              onPress={() => item.href && router.push(item.href)}
               style={[
                 styles.menuRow,
                 { borderTopColor: theme.backgroundSelected },
                 index === 0 && styles.menuRowFirst,
               ]}>
-              <ThemedText type="default">{item}</ThemedText>
-            </ThemedView>
+              <ThemedText type="default">{item.label}</ThemedText>
+            </Pressable>
           ))}
         </ThemedView>
 

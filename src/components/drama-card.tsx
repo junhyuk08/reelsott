@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { StyleSheet, TouchableOpacity, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, TouchableOpacity, type StyleProp, type ViewStyle } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -19,16 +19,25 @@ type DramaCardProps = {
   drama: Drama;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
+  isFavorite?: boolean;
+  onToggleFavorite?: () => void;
 };
 
-export function DramaCard({ drama, onPress, style }: DramaCardProps) {
+export function DramaCard({ drama, onPress, style, isFavorite, onToggleFavorite }: DramaCardProps) {
   return (
     <TouchableOpacity style={[styles.card, style]} onPress={onPress} activeOpacity={0.7}>
-      {drama.thumbnailUrl ? (
-        <Image source={{ uri: drama.thumbnailUrl }} style={styles.thumbnail} contentFit="cover" />
-      ) : (
-        <ThemedView type="backgroundElement" style={styles.thumbnail} />
-      )}
+      <ThemedView style={styles.thumbnailWrapper}>
+        {drama.thumbnailUrl ? (
+          <Image source={{ uri: drama.thumbnailUrl }} style={styles.thumbnail} contentFit="cover" />
+        ) : (
+          <ThemedView type="backgroundElement" style={styles.thumbnail} />
+        )}
+        {onToggleFavorite && (
+          <Pressable onPress={onToggleFavorite} style={styles.favoriteButton} hitSlop={8}>
+            <ThemedText style={styles.favoriteGlyph}>{isFavorite ? '♥' : '♡'}</ThemedText>
+          </Pressable>
+        )}
+      </ThemedView>
       <ThemedText type="smallBold" style={styles.title} numberOfLines={1}>
         {drama.title}
       </ThemedText>
@@ -43,10 +52,28 @@ const styles = StyleSheet.create({
   card: {
     flex: 1,
   },
+  thumbnailWrapper: {
+    position: 'relative',
+  },
   thumbnail: {
     width: '100%',
     aspectRatio: 2 / 3,
     borderRadius: Spacing.two,
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: Spacing.one,
+    right: Spacing.one,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  favoriteGlyph: {
+    color: '#FF3B5C',
+    fontSize: 16,
   },
   title: {
     marginTop: Spacing.half + 4,

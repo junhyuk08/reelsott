@@ -8,17 +8,22 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useDramas } from '@/hooks/use-dramas';
+import { useFavorites } from '@/hooks/use-favorites';
 import { useSession } from '@/hooks/use-session';
+import { recordWatchHistory } from '@/lib/watch-history';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { isLoggedIn } = useSession();
+  const { session, isLoggedIn } = useSession();
   const { dramas, loading, error } = useDramas();
+  const { favoriteIds, toggleFavorite } = useFavorites();
 
-  function handlePressDrama() {
-    if (!isLoggedIn) {
+  function handlePressDrama(dramaId: string) {
+    if (!isLoggedIn || !session) {
       router.push('/login');
+      return;
     }
+    recordWatchHistory(session.user.id, dramaId);
   }
 
   return (
@@ -36,7 +41,14 @@ export default function HomeScreen() {
             numColumns={2}
             contentContainerStyle={styles.listContent}
             columnWrapperStyle={styles.row}
-            renderItem={({ item }) => <DramaCard drama={item} onPress={handlePressDrama} />}
+            renderItem={({ item }) => (
+              <DramaCard
+                drama={item}
+                onPress={() => handlePressDrama(item.id)}
+                isFavorite={favoriteIds.has(item.id)}
+                onToggleFavorite={isLoggedIn ? () => toggleFavorite(item.id) : undefined}
+              />
+            )}
           />
         )}
       </SafeAreaView>
