@@ -28,6 +28,7 @@ function RootLayoutContent() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="login" />
         <Stack.Screen name="signup" />
+        <Stack.Screen name="drama/[id]" />
       </Stack>
     </>
   );

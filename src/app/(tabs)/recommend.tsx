@@ -10,7 +10,7 @@ import { Spacing } from '@/constants/theme';
 import { useDramas } from '@/hooks/use-dramas';
 import { useSession } from '@/hooks/use-session';
 
-function DramaRow({ title, data, onPressDrama }: { title: string; data: Drama[]; onPressDrama: () => void }) {
+function DramaRow({ title, data, onPressDrama }: { title: string; data: Drama[]; onPressDrama: (dramaId: string) => void }) {
   return (
     <ThemedView style={styles.section}>
       <ThemedText type="subtitle" style={styles.sectionTitle}>
@@ -18,7 +18,7 @@ function DramaRow({ title, data, onPressDrama }: { title: string; data: Drama[];
       </ThemedText>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rowContent}>
         {data.map((drama) => (
-          <DramaCard key={drama.id} drama={drama} onPress={onPressDrama} style={styles.rowCard} />
+          <DramaCard key={drama.id} drama={drama} onPress={() => onPressDrama(drama.id)} style={styles.rowCard} />
         ))}
       </ScrollView>
     </ThemedView>
@@ -30,10 +30,12 @@ export default function RecommendScreen() {
   const { isLoggedIn } = useSession();
   const { dramas, loading, error } = useDramas();
 
-  function handlePressDrama() {
+  function handlePressDrama(dramaId: string) {
     if (!isLoggedIn) {
       router.push('/login');
+      return;
     }
+    router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 
   const trending = [...dramas].sort((a, b) => b.viewCount - a.viewCount).slice(0, 4);

@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { Redirect, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -12,7 +12,6 @@ import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
 
 const ACCENT = '#FF3B5C';
-const DUMMY_COIN_BALANCE = 0;
 const MENU_ITEMS = ['시청 기록', '찜한 드라마', '알림 설정', '고객센터', '공지사항'];
 const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
 
@@ -31,10 +30,29 @@ export default function MyPageScreen() {
   const router = useRouter();
   const { session, isLoggedIn, loading } = useSession();
 
+  const [coinBalance, setCoinBalance] = useState(0);
   const [showDeleteForm, setShowDeleteForm] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    if (!session) return;
+    let cancelled = false;
+
+    supabase
+      .from('profiles')
+      .select('coin_balance')
+      .eq('id', session.user.id)
+      .single()
+      .then(({ data }) => {
+        if (!cancelled && data) setCoinBalance(data.coin_balance);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
 
   if (loading) return null;
   if (!isLoggedIn) return <Redirect href="/login" />;
@@ -94,7 +112,7 @@ export default function MyPageScreen() {
               <ThemedText type="small" themeColor="textSecondary">
                 보유 코인
               </ThemedText>
-              <ThemedText type="smallBold">{DUMMY_COIN_BALANCE.toLocaleString()} 코인</ThemedText>
+              <ThemedText type="smallBold">{coinBalance.toLocaleString()} 코인</ThemedText>
             </View>
             <Pressable onPress={() => {}} style={styles.chargeButton}>
               <ThemedText style={styles.chargeButtonText}>코인 충전하기</ThemedText>

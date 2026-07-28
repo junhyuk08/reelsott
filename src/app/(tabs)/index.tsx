@@ -23,10 +23,12 @@ export default function HomeScreen() {
     return dramas.filter((drama) => drama.title.includes(trimmed));
   }, [dramas, query]);
 
-  function handlePressDrama() {
+  function handlePressDrama(dramaId: string) {
     if (!isLoggedIn) {
       router.push('/login');
+      return;
     }
+    router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 
   return (
@@ -44,7 +46,7 @@ export default function HomeScreen() {
             numColumns={2}
             contentContainerStyle={styles.listContent}
             columnWrapperStyle={styles.row}
-            renderItem={({ item }) => <DramaCard drama={item} onPress={handlePressDrama} />}
+            renderItem={({ item }) => <DramaCard drama={item} onPress={() => handlePressDrama(item.id)} />}
             ListEmptyComponent={
               <ThemedText type="small" themeColor="textSecondary" style={styles.emptyText}>
                 검색 결과가 없어요
