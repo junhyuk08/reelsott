@@ -4,7 +4,11 @@ import { Pressable, StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 
-export function BackButton() {
+type BackButtonProps = {
+  color?: string;
+};
+
+export function BackButton({ color }: BackButtonProps) {
   const router = useRouter();
 
   function handleBack() {
@@ -17,7 +21,7 @@ export function BackButton() {
 
   return (
     <Pressable onPress={handleBack} style={styles.button} hitSlop={8}>
-      <ThemedText style={styles.glyph}>‹</ThemedText>
+      <ThemedText style={[styles.glyph, color ? { color } : undefined]}>‹</ThemedText>
     </Pressable>
   );
 }
