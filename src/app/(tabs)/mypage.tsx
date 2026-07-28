@@ -1,5 +1,6 @@
-import { Redirect } from 'expo-router';
-import { Pressable, StyleSheet } from 'react-native';
+import { Redirect, useRouter } from 'expo-router';
+import { useState } from 'react';
+import { Pressable, StyleSheet, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -11,9 +12,25 @@ import { supabase } from '@/lib/supabase';
 
 const MENU_ITEMS = ['구독 관리', '알림 설정', '고객센터', '이용약관'];
 
+async function extractErrorMessage(error: unknown, fallback: string) {
+  const context = (error as { context?: Response })?.context;
+  try {
+    const body = await context?.json();
+    return typeof body?.error === 'string' ? body.error : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 export default function MyPageScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { session, isLoggedIn, loading } = useSession();
+
+  const [showDeleteForm, setShowDeleteForm] = useState(false);
+  const [deletePassword, setDeletePassword] = useState('');
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   if (loading) return null;
   if (!isLoggedIn) return <Redirect href="/login" />;
@@ -23,6 +40,29 @@ export default function MyPageScreen() {
 
   async function handleLogout() {
     await supabase.auth.signOut();
+  }
+
+  async function handleDeleteAccount() {
+    if (!deletePassword) {
+      setDeleteError('비밀번호를 입력해주세요.');
+      return;
+    }
+
+    setDeleteError(null);
+    setDeleting(true);
+
+    const { data, error } = await supabase.functions.invoke('delete-account', {
+      body: { password: deletePassword },
+    });
+
+    if (error || !data?.success) {
+      setDeleting(false);
+      setDeleteError(await extractErrorMessage(error, '탈퇴 처리 중 오류가 발생했습니다.'));
+      return;
+    }
+
+    await supabase.auth.signOut();
+    router.replace('/login');
   }
 
   return (
@@ -63,6 +103,42 @@ export default function MyPageScreen() {
             로그아웃
           </ThemedText>
         </Pressable>
+
+        {showDeleteForm ? (
+          <ThemedView style={styles.deleteForm}>
+            <ThemedText type="small" themeColor="textSecondary">
+              계정을 삭제하려면 비밀번호를 입력해주세요. 이 작업은 되돌릴 수 없습니다.
+            </ThemedText>
+            <TextInput
+              style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
+              placeholder="비밀번호"
+              placeholderTextColor={theme.textSecondary}
+              value={deletePassword}
+              onChangeText={setDeletePassword}
+              secureTextEntry
+              autoComplete="current-password"
+            />
+            {deleteError && (
+              <ThemedText type="small" style={styles.deleteErrorText}>
+                {deleteError}
+              </ThemedText>
+            )}
+            <Pressable
+              onPress={handleDeleteAccount}
+              disabled={deleting}
+              style={[styles.deleteConfirmButton, deleting && styles.disabled]}>
+              <ThemedText type="default" style={styles.deleteConfirmButtonText}>
+                {deleting ? '탈퇴 처리 중...' : '확인 후 탈퇴'}
+              </ThemedText>
+            </Pressable>
+          </ThemedView>
+        ) : (
+          <Pressable onPress={() => setShowDeleteForm(true)} style={styles.deleteLink}>
+            <ThemedText type="small" themeColor="textSecondary">
+              회원탈퇴
+            </ThemedText>
+          </Pressable>
+        )}
       </SafeAreaView>
     </ThemedView>
   );
@@ -120,5 +196,37 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
     paddingVertical: Spacing.three,
     alignItems: 'center',
+  },
+  deleteLink: {
+    marginTop: Spacing.four,
+    alignItems: 'center',
+  },
+  deleteForm: {
+    marginHorizontal: Spacing.three,
+    marginTop: Spacing.four,
+    gap: Spacing.two,
+  },
+  input: {
+    borderRadius: Spacing.three,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.three - 1,
+    fontSize: 16,
+  },
+  deleteErrorText: {
+    color: '#D33',
+  },
+  deleteConfirmButton: {
+    backgroundColor: '#D33',
+    borderRadius: Spacing.three,
+    paddingVertical: Spacing.three,
+    alignItems: 'center',
+    marginTop: Spacing.one,
+  },
+  deleteConfirmButtonText: {
+    color: '#ffffff',
+    fontWeight: '700',
+  },
+  disabled: {
+    opacity: 0.5,
   },
 });
