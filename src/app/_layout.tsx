@@ -4,19 +4,31 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { SessionProvider, useSession } from '@/hooks/use-session';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
+    <SessionProvider>
+      <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
+        <RootLayoutContent />
+      </ThemeProvider>
+    </SessionProvider>
+  );
+}
+
+function RootLayoutContent() {
+  const { loading } = useSession();
+  return (
+    <>
+      <AnimatedSplashOverlay ready={!loading} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="login" />
         <Stack.Screen name="signup" />
       </Stack>
-    </ThemeProvider>
+    </>
   );
 }

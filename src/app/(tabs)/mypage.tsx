@@ -1,5 +1,6 @@
+import Constants from 'expo-constants';
 import { Redirect } from 'expo-router';
-import { Pressable, StyleSheet } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -9,7 +10,10 @@ import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
 
-const MENU_ITEMS = ['구독 관리', '알림 설정', '고객센터', '이용약관'];
+const ACCENT = '#FF3B5C';
+const DUMMY_COIN_BALANCE = 0;
+const MENU_ITEMS = ['시청 기록', '찜한 드라마', '알림 설정', '고객센터', '공지사항'];
+const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
 
 export default function MyPageScreen() {
   const theme = useTheme();
@@ -28,41 +32,69 @@ export default function MyPageScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.flex} edges={['top']}>
-        <ThemedText type="title" style={styles.pageTitle}>
-          마이페이지
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.profileCard}>
-          <ThemedView style={styles.avatar}>
-            <ThemedText style={styles.avatarGlyph}>👤</ThemedText>
-          </ThemedView>
-          <ThemedView type="backgroundElement" style={styles.profileText}>
-            <ThemedText type="smallBold">{nickname}</ThemedText>
-            <ThemedText type="small" themeColor="textSecondary">
-              {email}
-            </ThemedText>
-          </ThemedView>
-        </ThemedView>
-
-        <ThemedView style={styles.menuList}>
-          {MENU_ITEMS.map((item, index) => (
-            <ThemedView
-              key={item}
-              style={[
-                styles.menuRow,
-                { borderTopColor: theme.backgroundSelected },
-                index === 0 && styles.menuRowFirst,
-              ]}>
-              <ThemedText type="default">{item}</ThemedText>
-            </ThemedView>
-          ))}
-        </ThemedView>
-
-        <Pressable onPress={handleLogout} style={[styles.logoutButton, { borderColor: theme.backgroundSelected }]}>
-          <ThemedText type="default" themeColor="textSecondary">
-            로그아웃
+        <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ThemedText type="title" style={styles.pageTitle}>
+            마이페이지
           </ThemedText>
-        </Pressable>
+
+          <ThemedView type="backgroundElement" style={styles.profileCard}>
+            <ThemedView style={styles.avatar}>
+              <ThemedText style={styles.avatarGlyph}>👤</ThemedText>
+            </ThemedView>
+            <ThemedView type="backgroundElement" style={styles.profileText}>
+              <ThemedText type="smallBold">{nickname}</ThemedText>
+              <ThemedText type="small" themeColor="textSecondary">
+                {email}
+              </ThemedText>
+            </ThemedView>
+          </ThemedView>
+
+          <ThemedView type="backgroundElement" style={styles.coinCard}>
+            <View style={styles.coinRow}>
+              <ThemedText type="small" themeColor="textSecondary">
+                보유 코인
+              </ThemedText>
+              <ThemedText type="smallBold">{DUMMY_COIN_BALANCE.toLocaleString()} 코인</ThemedText>
+            </View>
+            <Pressable onPress={() => {}} style={styles.chargeButton}>
+              <ThemedText style={styles.chargeButtonText}>코인 충전하기</ThemedText>
+            </Pressable>
+          </ThemedView>
+
+          <ThemedView style={styles.menuList}>
+            {MENU_ITEMS.map((item, index) => (
+              <Pressable
+                key={item}
+                onPress={() => {}}
+                style={[
+                  styles.menuRow,
+                  { borderTopColor: theme.backgroundSelected },
+                  index === 0 && styles.menuRowFirst,
+                ]}>
+                <ThemedText type="default">{item}</ThemedText>
+                <ThemedText type="default" themeColor="textSecondary">
+                  ›
+                </ThemedText>
+              </Pressable>
+            ))}
+          </ThemedView>
+
+          <Pressable onPress={handleLogout} style={[styles.logoutButton, { borderColor: theme.backgroundSelected }]}>
+            <ThemedText type="default" themeColor="textSecondary">
+              로그아웃
+            </ThemedText>
+          </Pressable>
+
+          <Pressable onPress={() => {}} style={styles.withdrawLink}>
+            <ThemedText type="small" themeColor="textSecondary">
+              회원탈퇴
+            </ThemedText>
+          </Pressable>
+
+          <ThemedText type="small" themeColor="textSecondary" style={styles.versionText}>
+            v{APP_VERSION}
+          </ThemedText>
+        </ScrollView>
       </SafeAreaView>
     </ThemedView>
   );
@@ -74,6 +106,9 @@ const styles = StyleSheet.create({
   },
   flex: {
     flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: Spacing.five,
   },
   pageTitle: {
     fontSize: 28,
@@ -93,7 +128,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#FF3B5C',
+    backgroundColor: ACCENT,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -103,10 +138,36 @@ const styles = StyleSheet.create({
   profileText: {
     gap: 2,
   },
+  coinCard: {
+    marginHorizontal: Spacing.three,
+    padding: Spacing.four,
+    borderRadius: Spacing.three,
+    gap: Spacing.three,
+  },
+  coinRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  chargeButton: {
+    backgroundColor: ACCENT,
+    borderRadius: Spacing.three,
+    paddingVertical: Spacing.two,
+    alignItems: 'center',
+  },
+  chargeButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '700',
+  },
   menuList: {
     marginHorizontal: Spacing.three,
+    marginTop: Spacing.four,
   },
   menuRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     borderTopWidth: StyleSheet.hairlineWidth,
     paddingVertical: Spacing.three,
   },
@@ -120,5 +181,13 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.three,
     paddingVertical: Spacing.three,
     alignItems: 'center',
+  },
+  withdrawLink: {
+    alignItems: 'center',
+    marginTop: Spacing.four,
+  },
+  versionText: {
+    textAlign: 'center',
+    marginTop: Spacing.two,
   },
 });

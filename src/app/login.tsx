@@ -8,7 +8,9 @@ import {
   StyleSheet,
   TextInput,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { BackButton } from '@/components/back-button';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
@@ -69,61 +71,64 @@ export default function LoginScreen() {
 
   return (
     <ThemedView style={styles.flex}>
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
-          <ThemedView style={styles.logoArea}>
-            <ThemedText style={styles.logoEmoji}>🎬</ThemedText>
-            <ThemedText type="subtitle" style={styles.title}>
-              다시 만나서 반가워요
-            </ThemedText>
-            <ThemedText type="small" themeColor="textSecondary" style={styles.subtitle}>
-              이메일 또는 닉네임으로 로그인하고 이어보기를 시작하세요
-            </ThemedText>
-          </ThemedView>
-
-          <ThemedView style={styles.card}>
-            <TextInput
-              style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
-              placeholder="이메일 또는 닉네임"
-              placeholderTextColor={theme.textSecondary}
-              value={identifier}
-              onChangeText={setIdentifier}
-              autoCapitalize="none"
-              autoComplete="username"
-            />
-            <TextInput
-              style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
-              placeholder="비밀번호"
-              placeholderTextColor={theme.textSecondary}
-              value={password}
-              onChangeText={setPassword}
-              secureTextEntry
-              autoComplete="password"
-            />
-
-            {error && (
-              <ThemedText type="small" style={styles.errorText}>
-                {error}
+      <SafeAreaView style={styles.flex} edges={['top']}>
+        <BackButton />
+        <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+          <ScrollView contentContainerStyle={styles.scrollContent} keyboardShouldPersistTaps="handled">
+            <ThemedView style={styles.logoArea}>
+              <ThemedText style={styles.logoEmoji}>🎬</ThemedText>
+              <ThemedText type="subtitle" style={styles.title}>
+                다시 만나서 반가워요
               </ThemedText>
-            )}
-
-            <Pressable
-              onPress={handleLogin}
-              disabled={submitting}
-              style={[styles.loginButton, submitting && styles.disabled]}>
-              <ThemedText style={styles.loginButtonText}>
-                {submitting ? '로그인 중...' : '로그인'}
+              <ThemedText type="small" themeColor="textSecondary" style={styles.subtitle}>
+                이메일 또는 닉네임으로 로그인하고 이어보기를 시작하세요
               </ThemedText>
-            </Pressable>
-          </ThemedView>
+            </ThemedView>
 
-          <Link href="/signup" style={styles.signupLink}>
-            <ThemedText type="small" themeColor="textSecondary">
-              계정이 없으신가요? <ThemedText type="smallBold" style={styles.signupLinkAccent}>회원가입</ThemedText>
-            </ThemedText>
-          </Link>
-        </ScrollView>
-      </KeyboardAvoidingView>
+            <ThemedView style={styles.card}>
+              <TextInput
+                style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
+                placeholder="이메일 또는 닉네임"
+                placeholderTextColor={theme.textSecondary}
+                value={identifier}
+                onChangeText={setIdentifier}
+                autoCapitalize="none"
+                autoComplete="username"
+              />
+              <TextInput
+                style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
+                placeholder="비밀번호"
+                placeholderTextColor={theme.textSecondary}
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry
+                autoComplete="password"
+              />
+
+              {error && (
+                <ThemedText type="small" style={styles.errorText}>
+                  {error}
+                </ThemedText>
+              )}
+
+              <Pressable
+                onPress={handleLogin}
+                disabled={submitting}
+                style={[styles.loginButton, submitting && styles.disabled]}>
+                <ThemedText style={styles.loginButtonText}>
+                  {submitting ? '로그인 중...' : '로그인'}
+                </ThemedText>
+              </Pressable>
+            </ThemedView>
+
+            <Link href="/signup" style={styles.signupLink}>
+              <ThemedText type="small" themeColor="textSecondary">
+                계정이 없으신가요? <ThemedText type="smallBold" style={styles.signupLinkAccent}>회원가입</ThemedText>
+              </ThemedText>
+            </Link>
+          </ScrollView>
+        </KeyboardAvoidingView>
+      </SafeAreaView>
     </ThemedView>
   );
 }

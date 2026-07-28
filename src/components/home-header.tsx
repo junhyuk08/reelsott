@@ -1,23 +1,23 @@
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, View } from 'react-native';
 
 import { Logo } from '@/components/logo';
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
-import { supabase } from '@/lib/supabase';
 
 const ACCENT = '#FF3B5C';
 
-export function HomeHeader() {
+type HomeHeaderProps = {
+  query: string;
+  onQueryChange: (query: string) => void;
+};
+
+export function HomeHeader({ query, onQueryChange }: HomeHeaderProps) {
   const theme = useTheme();
   const router = useRouter();
   const { session, isLoggedIn } = useSession();
-
-  async function handleLogout() {
-    await supabase.auth.signOut();
-  }
 
   const displayName = (session?.user.user_metadata?.nickname as string | undefined) ?? session?.user.email;
 
@@ -25,16 +25,21 @@ export function HomeHeader() {
     <View style={styles.container}>
       <Logo />
 
+      <TextInput
+        style={[styles.searchInput, { backgroundColor: theme.backgroundElement, color: theme.text }]}
+        placeholder="제목 검색"
+        placeholderTextColor={theme.textSecondary}
+        value={query}
+        onChangeText={onQueryChange}
+        autoCapitalize="none"
+        returnKeyType="search"
+      />
+
       {isLoggedIn ? (
         <View style={styles.loggedInArea}>
           <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} style={styles.greeting}>
             {displayName}님
           </ThemedText>
-          <Pressable onPress={handleLogout} style={[styles.pillButton, { borderColor: theme.backgroundSelected }]}>
-            <ThemedText type="small" themeColor="textSecondary">
-              로그아웃
-            </ThemedText>
-          </Pressable>
         </View>
       ) : (
         <View style={styles.authButtons}>
@@ -58,13 +63,21 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: Spacing.two,
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
+  },
+  searchInput: {
+    flex: 1,
+    height: 36,
+    borderRadius: Spacing.five,
+    paddingHorizontal: Spacing.three,
+    fontSize: 14,
   },
   authButtons: {
     flexDirection: 'row',
     gap: Spacing.one,
+    flexShrink: 0,
   },
   loggedInArea: {
     flexDirection: 'row',
