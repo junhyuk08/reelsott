@@ -8,9 +8,23 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useDramas } from '@/hooks/use-dramas';
+import { useFavorites } from '@/hooks/use-favorites';
 import { useSession } from '@/hooks/use-session';
+import { recordWatchHistory } from '@/lib/watch-history';
 
-function DramaRow({ title, data, onPressDrama }: { title: string; data: Drama[]; onPressDrama: (dramaId: string) => void }) {
+function DramaRow({
+  title,
+  data,
+  onPressDrama,
+  favoriteIds,
+  onToggleFavorite,
+}: {
+  title: string;
+  data: Drama[];
+  onPressDrama: (dramaId: string) => void;
+  favoriteIds: Set<string>;
+  onToggleFavorite?: (dramaId: string) => void;
+}) {
   return (
     <ThemedView style={styles.section}>
       <ThemedText type="subtitle" style={styles.sectionTitle}>
@@ -18,7 +32,14 @@ function DramaRow({ title, data, onPressDrama }: { title: string; data: Drama[];
       </ThemedText>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rowContent}>
         {data.map((drama) => (
-          <DramaCard key={drama.id} drama={drama} onPress={() => onPressDrama(drama.id)} style={styles.rowCard} />
+          <DramaCard
+            key={drama.id}
+            drama={drama}
+            onPress={() => onPressDrama(drama.id)}
+            style={styles.rowCard}
+            isFavorite={favoriteIds.has(drama.id)}
+            onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(drama.id) : undefined}
+          />
         ))}
       </ScrollView>
     </ThemedView>
@@ -27,14 +48,16 @@ function DramaRow({ title, data, onPressDrama }: { title: string; data: Drama[];
 
 export default function RecommendScreen() {
   const router = useRouter();
-  const { isLoggedIn } = useSession();
+  const { session, isLoggedIn } = useSession();
   const { dramas, loading, error } = useDramas();
+  const { favoriteIds, toggleFavorite } = useFavorites();
 
   function handlePressDrama(dramaId: string) {
-    if (!isLoggedIn) {
+    if (!isLoggedIn || !session) {
       router.push('/login');
       return;
     }
+    recordWatchHistory(session.user.id, dramaId);
     router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 
@@ -58,8 +81,20 @@ export default function RecommendScreen() {
             </ThemedText>
           ) : loading ? null : (
             <>
-              <DramaRow title="인기 급상승" data={trending} onPressDrama={handlePressDrama} />
-              <DramaRow title="새로 나온 작품" data={newDramas} onPressDrama={handlePressDrama} />
+              <DramaRow
+                title="인기 급상승"
+                data={trending}
+                onPressDrama={handlePressDrama}
+                favoriteIds={favoriteIds}
+                onToggleFavorite={isLoggedIn ? toggleFavorite : undefined}
+              />
+              <DramaRow
+                title="새로 나온 작품"
+                data={newDramas}
+                onPressDrama={handlePressDrama}
+                favoriteIds={favoriteIds}
+                onToggleFavorite={isLoggedIn ? toggleFavorite : undefined}
+              />
             </>
           )}
         </ScrollView>

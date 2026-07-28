@@ -12,8 +12,19 @@ import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
 
 const ACCENT = '#FF3B5C';
-const MENU_ITEMS = ['시청 기록', '찜한 드라마', '알림 설정', '고객센터', '공지사항'];
 const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
+
+type MenuItem = { label: string; href: '/favorites' | '/watch-history' | null };
+
+const MENU_ITEMS: MenuItem[] = [
+  { label: '찜한 작품', href: '/favorites' },
+  { label: '시청기록', href: '/watch-history' },
+  { label: '구독 관리', href: null },
+  { label: '알림 설정', href: null },
+  { label: '고객센터', href: null },
+  { label: '공지사항', href: null },
+  { label: '이용약관', href: null },
+];
 
 async function extractErrorMessage(error: unknown, fallback: string) {
   const context = (error as { context?: Response })?.context;
@@ -122,17 +133,20 @@ export default function MyPageScreen() {
           <ThemedView style={styles.menuList}>
             {MENU_ITEMS.map((item, index) => (
               <Pressable
-                key={item}
-                onPress={() => {}}
+                key={item.label}
+                disabled={!item.href}
+                onPress={() => item.href && router.push(item.href)}
                 style={[
                   styles.menuRow,
                   { borderTopColor: theme.backgroundSelected },
                   index === 0 && styles.menuRowFirst,
                 ]}>
-                <ThemedText type="default">{item}</ThemedText>
-                <ThemedText type="default" themeColor="textSecondary">
-                  ›
-                </ThemedText>
+                <ThemedText type="default">{item.label}</ThemedText>
+                {item.href && (
+                  <ThemedText type="default" themeColor="textSecondary">
+                    ›
+                  </ThemedText>
+                )}
               </Pressable>
             ))}
           </ThemedView>

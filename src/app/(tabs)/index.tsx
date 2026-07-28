@@ -9,12 +9,15 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useDramas } from '@/hooks/use-dramas';
+import { useFavorites } from '@/hooks/use-favorites';
 import { useSession } from '@/hooks/use-session';
+import { recordWatchHistory } from '@/lib/watch-history';
 
 export default function HomeScreen() {
   const router = useRouter();
-  const { isLoggedIn } = useSession();
+  const { session, isLoggedIn } = useSession();
   const { dramas, loading, error } = useDramas();
+  const { favoriteIds, toggleFavorite } = useFavorites();
   const [query, setQuery] = useState('');
 
   const filteredDramas = useMemo(() => {
@@ -24,10 +27,11 @@ export default function HomeScreen() {
   }, [dramas, query]);
 
   function handlePressDrama(dramaId: string) {
-    if (!isLoggedIn) {
+    if (!isLoggedIn || !session) {
       router.push('/login');
       return;
     }
+    recordWatchHistory(session.user.id, dramaId);
     router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 
@@ -46,7 +50,14 @@ export default function HomeScreen() {
             numColumns={2}
             contentContainerStyle={styles.listContent}
             columnWrapperStyle={styles.row}
-            renderItem={({ item }) => <DramaCard drama={item} onPress={() => handlePressDrama(item.id)} />}
+            renderItem={({ item }) => (
+              <DramaCard
+                drama={item}
+                onPress={() => handlePressDrama(item.id)}
+                isFavorite={favoriteIds.has(item.id)}
+                onToggleFavorite={isLoggedIn ? () => toggleFavorite(item.id) : undefined}
+              />
+            )}
             ListEmptyComponent={
               <ThemedText type="small" themeColor="textSecondary" style={styles.emptyText}>
                 검색 결과가 없어요
