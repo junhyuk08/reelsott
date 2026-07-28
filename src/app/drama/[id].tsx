@@ -7,7 +7,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useDrama } from '@/hooks/use-dramas';
-import { useEpisodes, type Episode } from '@/hooks/use-episodes';
+import { useEpisodes } from '@/hooks/use-episodes';
 import { useTheme } from '@/hooks/use-theme';
 
 const ACCENT = '#FF3B5C';
@@ -40,13 +40,13 @@ export default function DramaDetailScreen() {
     Alert.alert('잠금 해제', '코인으로 잠금 해제하는 기능은 곧 추가될 예정이에요.');
   }
 
-  function handlePressPlay(episode: Episode) {
+  function handlePressPlay(episodeId: string, episodeNumber: number, videoUrl: string) {
     router.push({
       pathname: '/watch/[episodeId]',
       params: {
-        episodeId: episode.id,
-        videoUrl: episode.videoUrl,
-        title: `${dramaTitle} ${episode.episodeNumber}화`,
+        episodeId,
+        videoUrl,
+        title: `${dramaTitle} ${episodeNumber}화`,
       },
     });
   }
@@ -74,29 +74,38 @@ export default function DramaDetailScreen() {
               아직 준비 중인 콘텐츠입니다
             </ThemedText>
           }
-          renderItem={({ item: episode, index }) => (
-            <View
-              style={[
-                styles.episodeRow,
-                { borderTopColor: theme.backgroundSelected },
-                index === 0 && styles.episodeRowFirst,
-              ]}>
-              <ThemedText type="default">{episode.episodeNumber}화</ThemedText>
-              {episode.isLocked ? (
-                <Pressable onPress={handlePressLocked} style={styles.lockButton}>
+          renderItem={({ item: episode, index }) => {
+            const videoUrl = episode.videoUrl;
+            return (
+              <View
+                style={[
+                  styles.episodeRow,
+                  { borderTopColor: theme.backgroundSelected },
+                  index === 0 && styles.episodeRowFirst,
+                ]}>
+                <ThemedText type="default">{episode.episodeNumber}화</ThemedText>
+                {episode.isLocked ? (
+                  <Pressable onPress={handlePressLocked} style={styles.lockButton}>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      🔒 코인으로 잠금 해제
+                    </ThemedText>
+                  </Pressable>
+                ) : videoUrl ? (
+                  <Pressable
+                    onPress={() => handlePressPlay(episode.id, episode.episodeNumber, videoUrl)}
+                    style={styles.playButton}>
+                    <ThemedText type="small" style={styles.playButtonText}>
+                      ▶ 재생
+                    </ThemedText>
+                  </Pressable>
+                ) : (
                   <ThemedText type="small" themeColor="textSecondary">
-                    🔒 코인으로 잠금 해제
+                    준비 중
                   </ThemedText>
-                </Pressable>
-              ) : (
-                <Pressable onPress={() => handlePressPlay(episode)} style={styles.playButton}>
-                  <ThemedText type="small" style={styles.playButtonText}>
-                    ▶ 재생
-                  </ThemedText>
-                </Pressable>
-              )}
-            </View>
-          )}
+                )}
+              </View>
+            );
+          }}
         />
       </SafeAreaView>
     </ThemedView>

@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase';
 export type Episode = {
   id: string;
   episodeNumber: number;
-  videoUrl: string;
+  videoUrl: string | null;
   isLocked: boolean;
 };
 
