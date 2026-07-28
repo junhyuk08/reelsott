@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { StyleSheet, TouchableOpacity, type StyleProp, type ViewStyle } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -7,8 +8,11 @@ import { Spacing } from '@/constants/theme';
 export type Drama = {
   id: string;
   title: string;
+  thumbnailUrl: string | null;
   genre: string;
   episodeCount: number;
+  isNew: boolean;
+  viewCount: number;
 };
 
 type DramaCardProps = {
@@ -20,7 +24,11 @@ type DramaCardProps = {
 export function DramaCard({ drama, onPress, style }: DramaCardProps) {
   return (
     <TouchableOpacity style={[styles.card, style]} onPress={onPress} activeOpacity={0.7}>
-      <ThemedView type="backgroundElement" style={styles.thumbnail} />
+      {drama.thumbnailUrl ? (
+        <Image source={{ uri: drama.thumbnailUrl }} style={styles.thumbnail} contentFit="cover" />
+      ) : (
+        <ThemedView type="backgroundElement" style={styles.thumbnail} />
+      )}
       <ThemedText type="smallBold" style={styles.title} numberOfLines={1}>
         {drama.title}
       </ThemedText>

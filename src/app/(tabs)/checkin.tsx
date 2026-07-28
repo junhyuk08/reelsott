@@ -1,4 +1,3 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Redirect } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
@@ -9,9 +8,16 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
+import { supabase } from '@/lib/supabase';
 
 const ACCENT = '#FF3B5C';
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
+
+type ProfileSummary = {
+  consecutiveDays: number;
+  coinBalance: number;
+  lastAttendanceDate: string | null;
+};
 
 function toDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
@@ -27,44 +33,80 @@ function lastSevenDays() {
   return days;
 }
 
-function computeStreak(checkedDates: Set<string>) {
-  let streak = 0;
-  const cursor = new Date();
-  while (checkedDates.has(toDateKey(cursor))) {
-    streak += 1;
-    cursor.setDate(cursor.getDate() - 1);
-  }
-  return streak;
-}
-
 export default function CheckinScreen() {
   const theme = useTheme();
   const { session, isLoggedIn, loading } = useSession();
-  const [checkedDates, setCheckedDates] = useState<Set<string>>(new Set());
 
-  const storageKey = session ? `checkin:${session.user.id}` : null;
+  const [profile, setProfile] = useState<ProfileSummary | null>(null);
+  const [checkedDates, setCheckedDates] = useState<Set<string>>(new Set());
+  const [loadingData, setLoadingData] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!storageKey) return;
-    AsyncStorage.getItem(storageKey).then((raw) => {
-      setCheckedDates(new Set(raw ? (JSON.parse(raw) as string[]) : []));
-    });
-  }, [storageKey]);
+    if (!session) return;
+    const userId = session.user.id;
+    let cancelled = false;
 
-  if (loading) return null;
+    async function load() {
+      const sevenDaysAgo = toDateKey(lastSevenDays()[0]);
+
+      const [{ data: profileRow }, { data: logs }] = await Promise.all([
+        supabase
+          .from('profiles')
+          .select('consecutive_days, coin_balance, last_attendance_date')
+          .eq('id', userId)
+          .single(),
+        supabase.from('attendance_logs').select('checked_date').gte('checked_date', sevenDaysAgo),
+      ]);
+
+      if (cancelled) return;
+
+      if (profileRow) {
+        setProfile({
+          consecutiveDays: profileRow.consecutive_days,
+          coinBalance: profileRow.coin_balance,
+          lastAttendanceDate: profileRow.last_attendance_date,
+        });
+      }
+      setCheckedDates(new Set((logs ?? []).map((row: { checked_date: string }) => row.checked_date)));
+      setLoadingData(false);
+    }
+
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [session]);
+
+  if (loading || loadingData) return null;
   if (!isLoggedIn) return <Redirect href="/login" />;
 
   const todayKey = toDateKey(new Date());
-  const checkedToday = checkedDates.has(todayKey);
-  const streak = computeStreak(checkedDates);
+  const checkedToday = profile?.lastAttendanceDate === todayKey;
+  const streak = profile?.consecutiveDays ?? 0;
 
   async function handleCheckin() {
-    if (checkedToday || !storageKey) return;
+    if (checkedToday || submitting) return;
 
-    const next = new Set(checkedDates);
-    next.add(todayKey);
-    setCheckedDates(next);
-    await AsyncStorage.setItem(storageKey, JSON.stringify(Array.from(next)));
+    setError(null);
+    setSubmitting(true);
+
+    const { data, error: rpcError } = await supabase.rpc('check_attendance');
+
+    setSubmitting(false);
+
+    if (rpcError) {
+      setError(rpcError.message);
+      return;
+    }
+
+    setProfile({
+      consecutiveDays: data.consecutive_days,
+      coinBalance: data.coin_balance,
+      lastAttendanceDate: todayKey,
+    });
+    setCheckedDates((prev) => new Set(prev).add(todayKey));
   }
 
   return (
@@ -108,13 +150,22 @@ export default function CheckinScreen() {
           <ThemedText type="smallBold" style={styles.streakText}>
             연속 출석 {streak}일째
           </ThemedText>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.coinText}>
+            보유 코인 {profile?.coinBalance ?? 0}개
+          </ThemedText>
+
+          {error && (
+            <ThemedText type="small" style={styles.errorText}>
+              {error}
+            </ThemedText>
+          )}
 
           <Pressable
             onPress={handleCheckin}
-            disabled={checkedToday}
-            style={[styles.checkinButton, checkedToday && styles.checkinButtonDone]}>
+            disabled={checkedToday || submitting}
+            style={[styles.checkinButton, (checkedToday || submitting) && styles.checkinButtonDone]}>
             <ThemedText style={styles.checkinButtonText}>
-              {checkedToday ? '오늘 출석 완료' : '출석체크하기'}
+              {checkedToday ? '오늘 출석 완료' : submitting ? '처리 중...' : '출석체크하기'}
             </ThemedText>
           </Pressable>
         </ThemedView>
@@ -175,6 +226,15 @@ const styles = StyleSheet.create({
   streakText: {
     textAlign: 'center',
     marginTop: Spacing.four,
+  },
+  coinText: {
+    textAlign: 'center',
+    marginTop: Spacing.half,
+  },
+  errorText: {
+    color: '#D33',
+    textAlign: 'center',
+    marginTop: Spacing.three,
   },
   checkinButton: {
     backgroundColor: ACCENT,

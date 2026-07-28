@@ -2,14 +2,15 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import type { Drama } from '@/components/drama-card';
 import { DramaCard } from '@/components/drama-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
-import { NEW_DRAMAS, TRENDING_DRAMAS } from '@/constants/dramas';
 import { Spacing } from '@/constants/theme';
+import { useDramas } from '@/hooks/use-dramas';
 import { useSession } from '@/hooks/use-session';
 
-function DramaRow({ title, data, onPressDrama }: { title: string; data: typeof TRENDING_DRAMAS; onPressDrama: () => void }) {
+function DramaRow({ title, data, onPressDrama }: { title: string; data: Drama[]; onPressDrama: () => void }) {
   return (
     <ThemedView style={styles.section}>
       <ThemedText type="subtitle" style={styles.sectionTitle}>
@@ -27,12 +28,16 @@ function DramaRow({ title, data, onPressDrama }: { title: string; data: typeof T
 export default function RecommendScreen() {
   const router = useRouter();
   const { isLoggedIn } = useSession();
+  const { dramas, loading, error } = useDramas();
 
   function handlePressDrama() {
     if (!isLoggedIn) {
       router.push('/login');
     }
   }
+
+  const trending = [...dramas].sort((a, b) => b.viewCount - a.viewCount).slice(0, 4);
+  const newDramas = dramas.filter((drama) => drama.isNew);
 
   return (
     <ThemedView style={styles.container}>
@@ -45,8 +50,16 @@ export default function RecommendScreen() {
             취향에 맞춰 골라본 작품들이에요
           </ThemedText>
 
-          <DramaRow title="인기 급상승" data={TRENDING_DRAMAS} onPressDrama={handlePressDrama} />
-          <DramaRow title="새로 나온 작품" data={NEW_DRAMAS} onPressDrama={handlePressDrama} />
+          {error ? (
+            <ThemedText type="small" themeColor="textSecondary" style={styles.pageSubtitle}>
+              작품을 불러오지 못했어요.
+            </ThemedText>
+          ) : loading ? null : (
+            <>
+              <DramaRow title="인기 급상승" data={trending} onPressDrama={handlePressDrama} />
+              <DramaRow title="새로 나온 작품" data={newDramas} onPressDrama={handlePressDrama} />
+            </>
+          )}
         </ScrollView>
       </SafeAreaView>
     </ThemedView>
