@@ -2,8 +2,7 @@ import { useRouter } from 'expo-router';
 import { ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import type { Drama } from '@/components/drama-card';
-import { DramaCard } from '@/components/drama-card';
+import { DramaRow } from '@/components/drama-row';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
@@ -11,40 +10,6 @@ import { useDramas } from '@/hooks/use-dramas';
 import { useFavorites } from '@/hooks/use-favorites';
 import { useSession } from '@/hooks/use-session';
 import { recordWatchHistory } from '@/lib/watch-history';
-
-function DramaRow({
-  title,
-  data,
-  onPressDrama,
-  favoriteIds,
-  onToggleFavorite,
-}: {
-  title: string;
-  data: Drama[];
-  onPressDrama: (dramaId: string) => void;
-  favoriteIds: Set<string>;
-  onToggleFavorite?: (dramaId: string) => void;
-}) {
-  return (
-    <ThemedView style={styles.section}>
-      <ThemedText type="subtitle" style={styles.sectionTitle}>
-        {title}
-      </ThemedText>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rowContent}>
-        {data.map((drama) => (
-          <DramaCard
-            key={drama.id}
-            drama={drama}
-            onPress={() => onPressDrama(drama.id)}
-            style={styles.rowCard}
-            isFavorite={favoriteIds.has(drama.id)}
-            onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(drama.id) : undefined}
-          />
-        ))}
-      </ScrollView>
-    </ThemedView>
-  );
-}
 
 export default function RecommendScreen() {
   const router = useRouter();
@@ -121,22 +86,5 @@ const styles = StyleSheet.create({
   pageSubtitle: {
     marginTop: Spacing.half,
     paddingHorizontal: Spacing.three,
-  },
-  section: {
-    marginTop: Spacing.five,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    lineHeight: 24,
-    paddingHorizontal: Spacing.three,
-    marginBottom: Spacing.three,
-  },
-  rowContent: {
-    paddingHorizontal: Spacing.three,
-    gap: Spacing.three,
-  },
-  rowCard: {
-    width: 130,
-    flex: 0,
   },
 });
