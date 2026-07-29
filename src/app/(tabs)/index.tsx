@@ -31,6 +31,8 @@ export default function HomeScreen() {
 
   const newDramas = useMemo(() => dramas.slice(-10).reverse(), [dramas]);
 
+  const topDramas = useMemo(() => [...dramas].sort((a, b) => b.viewCount - a.viewCount).slice(0, 10), [dramas]);
+
   function handlePressDrama(dramaId: string) {
     if (!isLoggedIn || !session) {
       router.push('/login');
@@ -58,6 +60,17 @@ export default function HomeScreen() {
                 favoriteIds={favoriteIds}
                 onToggleFavorite={toggleFavorite}
                 onSeeAll={() => router.push('/watch-history')}
+              />
+            )}
+            {topDramas.length > 0 && (
+              <DramaRow
+                title="실시간 Top 10"
+                data={topDramas}
+                onPressDrama={handlePressDrama}
+                favoriteIds={favoriteIds}
+                onToggleFavorite={isLoggedIn ? toggleFavorite : undefined}
+                onSeeAll={() => router.push('/top-dramas')}
+                showRank
               />
             )}
             {newDramas.length > 0 && (
