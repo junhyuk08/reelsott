@@ -32,6 +32,7 @@ function RootLayoutContent() {
         <Stack.Screen name="watch/[dramaId]" />
         <Stack.Screen name="favorites" options={{ headerShown: true, title: '찜한 작품' }} />
         <Stack.Screen name="watch-history" options={{ headerShown: true, title: '시청기록' }} />
+        <Stack.Screen name="new-dramas" options={{ headerShown: true, title: '새로운 드라마' }} />
       </Stack>
     </>
   );
