@@ -1,5 +1,6 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -11,6 +12,7 @@ import { useDrama } from '@/hooks/use-dramas';
 import { EPISODE_COIN_COST, useEpisodes, type Episode } from '@/hooks/use-episodes';
 import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
+import { incrementViewCount } from '@/lib/dramas';
 
 const ACCENT = '#FF3B5C';
 
@@ -22,13 +24,17 @@ export default function DramaDetailScreen() {
   const { drama, loading: dramaLoading, error: dramaError } = useDrama(id);
   const { episodes, unlockedIds, loading: episodesLoading } = useEpisodes(id);
 
+  useEffect(() => {
+    incrementViewCount(id);
+  }, [id]);
+
   if (dramaLoading || episodesLoading) return null;
 
   if (dramaError || !drama) {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.flex} edges={['top']}>
-          <BackButton />
+          <BackButton withBackdrop />
           <ThemedText type="small" themeColor="textSecondary" style={styles.message}>
             작품을 불러오지 못했어요.
           </ThemedText>
@@ -60,7 +66,7 @@ export default function DramaDetailScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.flex} edges={['top']}>
-        <BackButton />
+        <BackButton withBackdrop />
         <FlatList
           data={episodes}
           keyExtractor={(episode) => episode.id}
