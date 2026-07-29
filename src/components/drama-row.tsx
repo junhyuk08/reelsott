@@ -1,10 +1,12 @@
-import { ScrollView, StyleSheet } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 
 import type { Drama } from '@/components/drama-card';
 import { DramaCard } from '@/components/drama-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+
+const CARD_WIDTH = 140;
 
 type DramaRowProps = {
   title: string;
@@ -22,14 +24,14 @@ export function DramaRow({ title, data, onPressDrama, favoriteIds, onToggleFavor
       </ThemedText>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rowContent}>
         {data.map((drama) => (
-          <DramaCard
-            key={drama.id}
-            drama={drama}
-            onPress={() => onPressDrama(drama.id)}
-            style={styles.rowCard}
-            isFavorite={favoriteIds.has(drama.id)}
-            onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(drama.id) : undefined}
-          />
+          <View key={drama.id} style={styles.cardWrapper}>
+            <DramaCard
+              drama={drama}
+              onPress={() => onPressDrama(drama.id)}
+              isFavorite={favoriteIds.has(drama.id)}
+              onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(drama.id) : undefined}
+            />
+          </View>
         ))}
       </ScrollView>
     </ThemedView>
@@ -48,10 +50,9 @@ const styles = StyleSheet.create({
   },
   rowContent: {
     paddingHorizontal: Spacing.three,
-    gap: Spacing.three,
+    gap: 12,
   },
-  rowCard: {
-    width: 130,
-    flex: 0,
+  cardWrapper: {
+    width: CARD_WIDTH,
   },
 });

@@ -42,7 +42,7 @@ export function DramaCard({ drama, onPress, style, isFavorite, onToggleFavorite 
           </Pressable>
         )}
       </ThemedView>
-      <ThemedText type="smallBold" style={styles.title} numberOfLines={1}>
+      <ThemedText type="smallBold" style={styles.title} numberOfLines={1} ellipsizeMode="tail">
         {drama.title}
       </ThemedText>
       <ThemedText type="small" themeColor="textSecondary" style={styles.meta}>
