@@ -1,5 +1,5 @@
 import { Image } from 'expo-image';
-import { Pressable, StyleSheet, TouchableOpacity, type StyleProp, type ViewStyle } from 'react-native';
+import { Pressable, StyleSheet, TouchableOpacity, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
@@ -21,9 +21,10 @@ type DramaCardProps = {
   style?: StyleProp<ViewStyle>;
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  rank?: number;
 };
 
-export function DramaCard({ drama, onPress, style, isFavorite, onToggleFavorite }: DramaCardProps) {
+export function DramaCard({ drama, onPress, style, isFavorite, onToggleFavorite, rank }: DramaCardProps) {
   return (
     <TouchableOpacity style={[styles.card, style]} onPress={onPress} activeOpacity={0.7}>
       <ThemedView style={styles.thumbnailWrapper}>
@@ -35,6 +36,11 @@ export function DramaCard({ drama, onPress, style, isFavorite, onToggleFavorite 
             contentFit="cover"
             transition={300}
           />
+        )}
+        {rank !== undefined && (
+          <View style={styles.rankBadge}>
+            <ThemedText style={styles.rankText}>{rank}</ThemedText>
+          </View>
         )}
         {onToggleFavorite && (
           <Pressable onPress={onToggleFavorite} style={styles.favoriteButton} hitSlop={8}>
@@ -68,6 +74,23 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 0,
     left: 0,
+  },
+  rankBadge: {
+    position: 'absolute',
+    top: Spacing.one,
+    left: Spacing.one,
+    minWidth: 28,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: Spacing.one,
+    backgroundColor: 'rgba(0, 0, 0, 0.55)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rankText: {
+    color: '#ffffff',
+    fontSize: 20,
+    fontWeight: '800',
   },
   favoriteButton: {
     position: 'absolute',

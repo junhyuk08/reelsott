@@ -15,9 +15,18 @@ type DramaRowProps = {
   favoriteIds: Set<string>;
   onToggleFavorite?: (dramaId: string) => void;
   onSeeAll?: () => void;
+  showRank?: boolean;
 };
 
-export function DramaRow({ title, data, onPressDrama, favoriteIds, onToggleFavorite, onSeeAll }: DramaRowProps) {
+export function DramaRow({
+  title,
+  data,
+  onPressDrama,
+  favoriteIds,
+  onToggleFavorite,
+  onSeeAll,
+  showRank,
+}: DramaRowProps) {
   return (
     <ThemedView style={styles.section}>
       <View style={styles.header}>
@@ -33,13 +42,14 @@ export function DramaRow({ title, data, onPressDrama, favoriteIds, onToggleFavor
         )}
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.rowContent}>
-        {data.map((drama) => (
+        {data.map((drama, index) => (
           <View key={drama.id} style={styles.cardWrapper}>
             <DramaCard
               drama={drama}
               onPress={() => onPressDrama(drama.id)}
               isFavorite={favoriteIds.has(drama.id)}
               onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(drama.id) : undefined}
+              rank={showRank ? index + 1 : undefined}
             />
           </View>
         ))}
