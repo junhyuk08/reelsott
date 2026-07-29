@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { FlatList, StyleSheet, useWindowDimensions, type ViewToken } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -15,18 +15,20 @@ export default function WatchDramaScreen() {
   const { dramaId, startEpisodeId } = useLocalSearchParams<{ dramaId: string; startEpisodeId?: string }>();
   const { height } = useWindowDimensions();
   const { drama, loading: dramaLoading, error: dramaError } = useDrama(dramaId);
-  const { episodes, unlockedIds, loading: episodesLoading, unlockEpisode } = useEpisodes(dramaId);
+  const {
+    episodes,
+    unlockedIds,
+    loading: episodesLoading,
+    error: episodesError,
+    unlockEpisode,
+  } = useEpisodes(dramaId);
   const listRef = useRef<FlatList<Episode>>(null);
-  const [focusedIndex, setFocusedIndex] = useState(0);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
   const initialIndex = useMemo(() => {
     const index = episodes.findIndex((episode) => episode.id === startEpisodeId);
     return index >= 0 ? index : 0;
   }, [episodes, startEpisodeId]);
-
-  useEffect(() => {
-    setFocusedIndex(initialIndex);
-  }, [initialIndex]);
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     const visible = viewableItems.find((item) => item.isViewable);
@@ -39,17 +41,18 @@ export default function WatchDramaScreen() {
 
   const handleFinish = useCallback(() => {
     setFocusedIndex((current) => {
-      const next = current + 1;
+      const currentIndex = current ?? initialIndex;
+      const next = currentIndex + 1;
       if (next < episodes.length) {
         listRef.current?.scrollToIndex({ index: next });
       }
       return current;
     });
-  }, [episodes.length]);
+  }, [episodes.length, initialIndex]);
 
   if (dramaLoading || episodesLoading) return null;
 
-  if (dramaError || !drama) {
+  if (dramaError || !drama || episodesError) {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.flex} edges={['top']}>
@@ -60,8 +63,19 @@ export default function WatchDramaScreen() {
     );
   }
 
+  if (episodes.length === 0) {
+    return (
+      <ThemedView style={styles.container}>
+        <SafeAreaView style={styles.flex} edges={['top']}>
+          <BackButton color="#ffffff" />
+          <ThemedText style={styles.message}>아직 준비 중인 콘텐츠입니다</ThemedText>
+        </SafeAreaView>
+      </ThemedView>
+    );
+  }
+
   const freeEpisodeCount = drama.freeEpisodeCount;
-  const focusedEpisode = episodes[focusedIndex];
+  const focusedEpisode = episodes[focusedIndex ?? initialIndex];
 
   return (
     <ThemedView style={styles.container}>
@@ -79,7 +93,7 @@ export default function WatchDramaScreen() {
           <EpisodeReel
             episode={item}
             height={height}
-            isFocused={index === focusedIndex}
+            isFocused={index === (focusedIndex ?? initialIndex)}
             isLocked={item.episodeNumber > freeEpisodeCount && !unlockedIds.has(item.id)}
             onUnlock={() => unlockEpisode(item.id)}
             onFinish={handleFinish}
