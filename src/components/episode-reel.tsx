@@ -5,9 +5,7 @@ import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import type { Episode } from '@/hooks/use-episodes';
-
-const EPISODE_COIN_COST = 30;
+import { EPISODE_COIN_COST, type Episode } from '@/hooks/use-episodes';
 
 type UnlockResult = { success: true; coinBalance: number } | { success: false; error: string };
 

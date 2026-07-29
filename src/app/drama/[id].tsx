@@ -8,12 +8,11 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useDrama } from '@/hooks/use-dramas';
-import { useEpisodes, type Episode } from '@/hooks/use-episodes';
+import { EPISODE_COIN_COST, useEpisodes, type Episode } from '@/hooks/use-episodes';
 import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
 
 const ACCENT = '#FF3B5C';
-const EPISODE_COIN_COST = 30;
 
 export default function DramaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
