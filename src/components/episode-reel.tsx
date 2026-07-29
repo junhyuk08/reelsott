@@ -40,10 +40,16 @@ export function EpisodeReel({ episode, height, isFocused, isLocked, onUnlock, on
 
   async function handleUnlock() {
     setUnlocking(true);
-    const result = await onUnlock();
-    setUnlocking(false);
-    if (!result.success) {
-      Alert.alert('잠금 해제 실패', result.error);
+    try {
+      const result = await onUnlock();
+      if (!result.success) {
+        Alert.alert('잠금 해제 실패', result.error);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : '알 수 없는 오류가 발생했습니다';
+      Alert.alert('잠금 해제 실패', errorMessage);
+    } finally {
+      setUnlocking(false);
     }
   }
 
