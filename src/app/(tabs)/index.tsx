@@ -57,6 +57,7 @@ export default function HomeScreen() {
                 onPressDrama={handlePressDrama}
                 favoriteIds={favoriteIds}
                 onToggleFavorite={toggleFavorite}
+                onSeeAll={() => router.push('/watch-history')}
               />
             )}
             {newDramas.length > 0 && (
@@ -66,6 +67,7 @@ export default function HomeScreen() {
                 onPressDrama={handlePressDrama}
                 favoriteIds={favoriteIds}
                 onToggleFavorite={isLoggedIn ? toggleFavorite : undefined}
+                onSeeAll={() => router.push('/new-dramas')}
               />
             )}
             <ThemedText type="subtitle" style={styles.gridTitle}>
