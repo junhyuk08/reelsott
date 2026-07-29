@@ -1,0 +1,10 @@
+update public.dramas set thumbnail_url = 'https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/drama-thumbnails/jaebeoljip-albaiteusaeng.png' where title = '재벌집 아르바이트생';
+update public.dramas set thumbnail_url = 'https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/drama-thumbnails/boksuneun-naui-geot.png' where title = '복수는 나의 것';
+update public.dramas set thumbnail_url = 'https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/drama-thumbnails/gyeyakjik-sinipsawon.png' where title = '계약직 신입사원';
+update public.dramas set thumbnail_url = 'https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/drama-thumbnails/jeonsaengui-nampyeon.png' where title = '전생의 남편';
+update public.dramas set thumbnail_url = 'https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/drama-thumbnails/bimil-anae.png' where title = '비밀 아내';
+update public.dramas set thumbnail_url = 'https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/drama-thumbnails/sajangnimui-gyeyakyeonae.png' where title = '사장님의 계약연애';
+update public.dramas set thumbnail_url = 'https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/drama-thumbnails/sihanbu-jaebeol-3se.png' where title = '시한부 재벌 3세';
+update public.dramas set thumbnail_url = 'https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/drama-thumbnails/ihon-byeonhosaui-bam.png' where title = '이혼 변호사의 밤';
+update public.dramas set thumbnail_url = 'https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/drama-thumbnails/hoegwihan-daejaebeol.png' where title = '회귀한 대재벌';
+update public.dramas set thumbnail_url = 'https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/drama-thumbnails/oneulbuteo-urineun.png' where title = '오늘부터 우리는';
