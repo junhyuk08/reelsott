@@ -1,3 +1,4 @@
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native';
@@ -87,6 +88,17 @@ export default function DramaDetailScreen() {
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={
             <View style={styles.header}>
+              <View style={styles.thumbnailWrapper}>
+                <ThemedView type="backgroundElement" style={styles.thumbnail} />
+                {drama.thumbnailUrl && (
+                  <Image
+                    source={{ uri: drama.thumbnailUrl }}
+                    style={[styles.thumbnail, styles.thumbnailOverlay]}
+                    contentFit="cover"
+                    transition={300}
+                  />
+                )}
+              </View>
               <ThemedText type="title" style={styles.title}>
                 {drama.title}
               </ThemedText>
@@ -161,6 +173,19 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.one,
     paddingBottom: Spacing.three,
     gap: Spacing.half,
+  },
+  thumbnailWrapper: {
+    marginBottom: Spacing.two,
+  },
+  thumbnail: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: Spacing.two,
+  },
+  thumbnailOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
   title: {
     fontSize: 24,

@@ -27,10 +27,14 @@ export function DramaCard({ drama, onPress, style, isFavorite, onToggleFavorite 
   return (
     <TouchableOpacity style={[styles.card, style]} onPress={onPress} activeOpacity={0.7}>
       <ThemedView style={styles.thumbnailWrapper}>
-        {drama.thumbnailUrl ? (
-          <Image source={{ uri: drama.thumbnailUrl }} style={styles.thumbnail} contentFit="cover" />
-        ) : (
-          <ThemedView type="backgroundElement" style={styles.thumbnail} />
+        <ThemedView type="backgroundElement" style={styles.thumbnail} />
+        {drama.thumbnailUrl && (
+          <Image
+            source={{ uri: drama.thumbnailUrl }}
+            style={[styles.thumbnail, styles.thumbnailOverlay]}
+            contentFit="cover"
+            transition={300}
+          />
         )}
         {onToggleFavorite && (
           <Pressable onPress={onToggleFavorite} style={styles.favoriteButton} hitSlop={8}>
@@ -59,6 +63,11 @@ const styles = StyleSheet.create({
     width: '100%',
     aspectRatio: 2 / 3,
     borderRadius: Spacing.two,
+  },
+  thumbnailOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
   favoriteButton: {
     position: 'absolute',
