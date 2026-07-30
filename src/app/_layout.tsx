@@ -29,9 +29,11 @@ function RootLayoutContent() {
         <Stack.Screen name="login" />
         <Stack.Screen name="signup" />
         <Stack.Screen name="drama/[id]" />
-        <Stack.Screen name="watch/[episodeId]" />
+        <Stack.Screen name="watch/[dramaId]" />
         <Stack.Screen name="favorites" options={{ headerShown: true, title: '찜한 작품' }} />
         <Stack.Screen name="watch-history" options={{ headerShown: true, title: '시청기록' }} />
+        <Stack.Screen name="new-dramas" options={{ headerShown: true, title: '새로운 드라마' }} />
+        <Stack.Screen name="top-dramas" options={{ headerShown: true, title: '실시간 Top 10' }} />
       </Stack>
     </>
   );

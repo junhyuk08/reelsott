@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { useSession } from '@/hooks/use-session';
 import { supabase } from '@/lib/supabase';
 
+export const EPISODE_COIN_COST = 30;
+
 export type Episode = {
   id: string;
   episodeNumber: number;

@@ -1,5 +1,6 @@
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -8,13 +9,13 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useDrama } from '@/hooks/use-dramas';
-import { useEpisodes, type Episode } from '@/hooks/use-episodes';
+import { EPISODE_COIN_COST, useEpisodes, type Episode } from '@/hooks/use-episodes';
 import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
+import { incrementViewCount } from '@/lib/dramas';
 import { recordWatchHistory } from '@/lib/watch-history';
 
 const ACCENT = '#FF3B5C';
-const EPISODE_COIN_COST = 30;
 
 export default function DramaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -22,8 +23,11 @@ export default function DramaDetailScreen() {
   const theme = useTheme();
   const { session, isLoggedIn } = useSession();
   const { drama, loading: dramaLoading, error: dramaError } = useDrama(id);
-  const { episodes, unlockedIds, loading: episodesLoading, unlockEpisode } = useEpisodes(id);
-  const [unlockingId, setUnlockingId] = useState<string | null>(null);
+  const { episodes, unlockedIds, loading: episodesLoading } = useEpisodes(id);
+
+  useEffect(() => {
+    incrementViewCount(id);
+  }, [id]);
 
   if (dramaLoading || episodesLoading) return null;
 
@@ -31,7 +35,7 @@ export default function DramaDetailScreen() {
     return (
       <ThemedView style={styles.container}>
         <SafeAreaView style={styles.flex} edges={['top']}>
-          <BackButton />
+          <BackButton withBackdrop />
           <ThemedText type="small" themeColor="textSecondary" style={styles.message}>
             작품을 불러오지 못했어요.
           </ThemedText>
@@ -40,57 +44,50 @@ export default function DramaDetailScreen() {
     );
   }
 
-  const dramaTitle = drama.title;
   const freeEpisodeCount = drama.freeEpisodeCount;
 
   function isLocked(episode: Episode) {
     return episode.episodeNumber > freeEpisodeCount && !unlockedIds.has(episode.id);
   }
 
-  async function handlePressLocked(episode: Episode) {
-    if (!isLoggedIn) {
+  function handlePressEpisode(episode: Episode) {
+    if (!episode.videoUrl) return;
+
+    if (isLocked(episode) && !isLoggedIn) {
       Alert.alert('로그인이 필요합니다.');
       return;
     }
 
-    setUnlockingId(episode.id);
-    const result = await unlockEpisode(episode.id);
-    setUnlockingId(null);
-
-    if (!result.success) {
-      Alert.alert('잠금 해제 실패', result.error);
-      return;
-    }
-
-    if (episode.videoUrl) {
-      handlePressPlay(episode.id, episode.episodeNumber, episode.videoUrl);
-    }
-  }
-
-  function handlePressPlay(episodeId: string, episodeNumber: number, videoUrl: string) {
     if (session) {
       recordWatchHistory(session.user.id, id);
     }
     router.push({
-      pathname: '/watch/[episodeId]',
-      params: {
-        episodeId,
-        videoUrl,
-        title: `${dramaTitle} ${episodeNumber}화`,
-      },
+      pathname: '/watch/[dramaId]',
+      params: { dramaId: id, startEpisodeId: episode.id },
     });
   }
 
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.flex} edges={['top']}>
-        <BackButton />
+        <BackButton withBackdrop />
         <FlatList
           data={episodes}
           keyExtractor={(episode) => episode.id}
           contentContainerStyle={styles.listContent}
           ListHeaderComponent={
             <View style={styles.header}>
+              <View style={styles.thumbnailWrapper}>
+                <ThemedView type="backgroundElement" style={styles.thumbnail} />
+                {drama.thumbnailUrl && (
+                  <Image
+                    source={{ uri: drama.thumbnailUrl }}
+                    style={[styles.thumbnail, styles.thumbnailOverlay]}
+                    contentFit="cover"
+                    transition={300}
+                  />
+                )}
+              </View>
               <ThemedText type="title" style={styles.title}>
                 {drama.title}
               </ThemedText>
@@ -105,7 +102,6 @@ export default function DramaDetailScreen() {
             </ThemedText>
           }
           renderItem={({ item: episode, index }) => {
-            const videoUrl = episode.videoUrl;
             const locked = isLocked(episode);
             return (
               <View
@@ -116,18 +112,13 @@ export default function DramaDetailScreen() {
                 ]}>
                 <ThemedText type="default">{episode.episodeNumber}화</ThemedText>
                 {locked ? (
-                  <Pressable
-                    onPress={() => handlePressLocked(episode)}
-                    disabled={unlockingId === episode.id}
-                    style={styles.lockButton}>
+                  <Pressable onPress={() => handlePressEpisode(episode)} style={styles.lockButton}>
                     <ThemedText type="small" themeColor="textSecondary">
-                      {unlockingId === episode.id ? '해제 중...' : `🔒 ${EPISODE_COIN_COST}코인으로 잠금 해제`}
+                      🔒 {EPISODE_COIN_COST}코인으로 잠금 해제
                     </ThemedText>
                   </Pressable>
-                ) : videoUrl ? (
-                  <Pressable
-                    onPress={() => handlePressPlay(episode.id, episode.episodeNumber, videoUrl)}
-                    style={styles.playButton}>
+                ) : episode.videoUrl ? (
+                  <Pressable onPress={() => handlePressEpisode(episode)} style={styles.playButton}>
                     <ThemedText type="small" style={styles.playButtonText}>
                       ▶ 재생
                     </ThemedText>
@@ -165,6 +156,19 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.one,
     paddingBottom: Spacing.three,
     gap: Spacing.half,
+  },
+  thumbnailWrapper: {
+    marginBottom: Spacing.two,
+  },
+  thumbnail: {
+    width: '100%',
+    aspectRatio: 16 / 9,
+    borderRadius: Spacing.two,
+  },
+  thumbnailOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
   },
   title: {
     fontSize: 24,
