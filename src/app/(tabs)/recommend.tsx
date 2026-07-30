@@ -72,7 +72,7 @@ export default function RecommendScreen() {
             추천
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary" style={styles.pageSubtitle}>
-            취향에 맞춰 골라본 작품들이에요
+            지금 가장 인기 있는 작품들을 모아봤어요
           </ThemedText>
 
           {error ? (

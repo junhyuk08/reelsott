@@ -11,6 +11,7 @@ import { useDrama } from '@/hooks/use-dramas';
 import { useEpisodes, type Episode } from '@/hooks/use-episodes';
 import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
+import { recordWatchHistory } from '@/lib/watch-history';
 
 const ACCENT = '#FF3B5C';
 const EPISODE_COIN_COST = 30;
@@ -19,7 +20,7 @@ export default function DramaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const theme = useTheme();
-  const { isLoggedIn } = useSession();
+  const { session, isLoggedIn } = useSession();
   const { drama, loading: dramaLoading, error: dramaError } = useDrama(id);
   const { episodes, unlockedIds, loading: episodesLoading, unlockEpisode } = useEpisodes(id);
   const [unlockingId, setUnlockingId] = useState<string | null>(null);
@@ -67,6 +68,9 @@ export default function DramaDetailScreen() {
   }
 
   function handlePressPlay(episodeId: string, episodeNumber: number, videoUrl: string) {
+    if (session) {
+      recordWatchHistory(session.user.id, id);
+    }
     router.push({
       pathname: '/watch/[episodeId]',
       params: {
