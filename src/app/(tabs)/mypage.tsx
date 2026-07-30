@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
-import { Redirect, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Redirect, useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -42,33 +42,45 @@ export default function MyPageScreen() {
   const { session, isLoggedIn, loading } = useSession();
 
   const [coinBalance, setCoinBalance] = useState(0);
+  const [nickname, setNickname] = useState<string | null>(null);
   const [showDeleteForm, setShowDeleteForm] = useState(false);
   const [deletePassword, setDeletePassword] = useState('');
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    if (!session) return;
-    let cancelled = false;
+  // Refetches every time this tab regains focus (not just on mount) so the
+  // coin balance reflects spends/earns made on other screens (check-in, ad
+  // reward, episode unlocks) instead of going stale while the tab stays
+  // mounted in the background.
+  useFocusEffect(
+    useCallback(() => {
+      if (!session) return;
+      let cancelled = false;
 
-    supabase
-      .from('profiles')
-      .select('coin_balance')
-      .eq('id', session.user.id)
-      .single()
-      .then(({ data }) => {
-        if (!cancelled && data) setCoinBalance(data.coin_balance);
-      });
+      supabase
+        .from('profiles')
+        .select('nickname, coin_balance')
+        .eq('id', session.user.id)
+        .single()
+        .then(({ data }) => {
+          if (cancelled || !data) return;
+          setCoinBalance(data.coin_balance);
+          setNickname(data.nickname);
+        });
 
-    return () => {
-      cancelled = true;
-    };
-  }, [session]);
+      return () => {
+        cancelled = true;
+      };
+    }, [session])
+  );
 
   if (loading) return null;
   if (!isLoggedIn) return <Redirect href="/login" />;
 
-  const nickname = (session?.user.user_metadata?.nickname as string | undefined) ?? '회원';
+  // profiles.nickname is the authoritative source (unique, used for
+  // nickname login); the JWT's user_metadata copy is just a same-value
+  // snapshot from signup, used here only until the fetch above resolves.
+  const displayNickname = nickname ?? (session?.user.user_metadata?.nickname as string | undefined) ?? '회원';
   const email = session?.user.email ?? '';
 
   async function handleLogout() {
@@ -111,7 +123,7 @@ export default function MyPageScreen() {
               <ThemedText style={styles.avatarGlyph}>👤</ThemedText>
             </ThemedView>
             <ThemedView type="backgroundElement" style={styles.profileText}>
-              <ThemedText type="smallBold">{nickname}</ThemedText>
+              <ThemedText type="smallBold">{displayNickname}</ThemedText>
               <ThemedText type="small" themeColor="textSecondary">
                 {email}
               </ThemedText>
@@ -125,7 +137,9 @@ export default function MyPageScreen() {
               </ThemedText>
               <ThemedText type="smallBold">{coinBalance.toLocaleString()} 코인</ThemedText>
             </View>
-            <Pressable onPress={() => {}} style={styles.chargeButton}>
+            <Pressable
+              onPress={() => Alert.alert('안내', '코인 충전 기능은 아직 준비 중이에요.')}
+              style={styles.chargeButton}>
               <ThemedText style={styles.chargeButtonText}>코인 충전하기</ThemedText>
             </Pressable>
           </ThemedView>

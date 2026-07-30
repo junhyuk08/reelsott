@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { FlatList, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -9,14 +9,23 @@ import { Spacing } from '@/constants/theme';
 import { useFavorites } from '@/hooks/use-favorites';
 import { useSession } from '@/hooks/use-session';
 import { useWatchHistory } from '@/hooks/use-watch-history';
+import { recordWatchHistory } from '@/lib/watch-history';
 
 export default function WatchHistoryScreen() {
-  const { isLoggedIn, loading: sessionLoading } = useSession();
+  const router = useRouter();
+  const { session, isLoggedIn, loading: sessionLoading } = useSession();
   const { favoriteIds, toggleFavorite } = useFavorites();
   const { dramas, loading } = useWatchHistory();
 
   if (sessionLoading) return null;
   if (!isLoggedIn) return <Redirect href="/login" />;
+
+  function handlePressDrama(dramaId: string) {
+    if (session) {
+      recordWatchHistory(session.user.id, dramaId);
+    }
+    router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
+  }
 
   return (
     <ThemedView style={styles.container}>
@@ -35,7 +44,7 @@ export default function WatchHistoryScreen() {
             renderItem={({ item }) => (
               <DramaCard
                 drama={item}
-                onPress={() => {}}
+                onPress={() => handlePressDrama(item.id)}
                 isFavorite={favoriteIds.has(item.id)}
                 onToggleFavorite={() => toggleFavorite(item.id)}
               />
