@@ -13,6 +13,7 @@ import { EPISODE_COIN_COST, useEpisodes, type Episode } from '@/hooks/use-episod
 import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
 import { incrementViewCount } from '@/lib/dramas';
+import { recordWatchHistory } from '@/lib/watch-history';
 
 const ACCENT = '#FF3B5C';
 
@@ -20,7 +21,7 @@ export default function DramaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const theme = useTheme();
-  const { isLoggedIn } = useSession();
+  const { session, isLoggedIn } = useSession();
   const { drama, loading: dramaLoading, error: dramaError } = useDrama(id);
   const { episodes, unlockedIds, loading: episodesLoading } = useEpisodes(id);
 
@@ -57,6 +58,9 @@ export default function DramaDetailScreen() {
       return;
     }
 
+    if (session) {
+      recordWatchHistory(session.user.id, id);
+    }
     router.push({
       pathname: '/watch/[dramaId]',
       params: { dramaId: id, startEpisodeId: episode.id },
