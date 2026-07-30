@@ -33,6 +33,8 @@ export default function HomeScreen() {
 
   const topDramas = useMemo(() => [...dramas].sort((a, b) => b.viewCount - a.viewCount).slice(0, 10), [dramas]);
 
+  const trending = useMemo(() => topDramas.slice(0, 4), [topDramas]);
+
   function handlePressDrama(dramaId: string) {
     if (!isLoggedIn || !session) {
       router.push('/login');
@@ -71,6 +73,15 @@ export default function HomeScreen() {
                 onToggleFavorite={isLoggedIn ? toggleFavorite : undefined}
                 onSeeAll={() => router.push('/top-dramas')}
                 showRank
+              />
+            )}
+            {trending.length > 0 && (
+              <DramaRow
+                title="인기 급상승"
+                data={trending}
+                onPressDrama={handlePressDrama}
+                favoriteIds={favoriteIds}
+                onToggleFavorite={isLoggedIn ? toggleFavorite : undefined}
               />
             )}
             {newDramas.length > 0 && (

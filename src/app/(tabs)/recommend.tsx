@@ -1,69 +1,75 @@
 import { useRouter } from 'expo-router';
-import { ScrollView, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { StatusBar } from 'expo-status-bar';
+import { useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, useWindowDimensions, type ViewToken } from 'react-native';
 
-import { DramaRow } from '@/components/drama-row';
+import { DiscoverReel } from '@/components/discover-reel';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { useDramas } from '@/hooks/use-dramas';
+import { useDiscoverFeed, type DiscoverItem } from '@/hooks/use-discover-feed';
 import { useFavorites } from '@/hooks/use-favorites';
-import { useSession } from '@/hooks/use-session';
-import { recordWatchHistory } from '@/lib/watch-history';
 
 export default function RecommendScreen() {
   const router = useRouter();
-  const { session, isLoggedIn } = useSession();
-  const { dramas, loading, error } = useDramas();
+  const { height: windowHeight } = useWindowDimensions();
+  const { items, loading, error } = useDiscoverFeed();
   const { favoriteIds, toggleFavorite } = useFavorites();
+  const listRef = useRef<FlatList<DiscoverItem>>(null);
+  const [focusedIndex, setFocusedIndex] = useState(0);
+  const [pageHeight, setPageHeight] = useState(windowHeight);
 
-  function handlePressDrama(dramaId: string) {
-    if (!isLoggedIn || !session) {
-      router.push('/login');
-      return;
+  const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    const visible = viewableItems.find((viewToken) => viewToken.isViewable);
+    if (visible?.index != null) {
+      setFocusedIndex(visible.index);
     }
-    recordWatchHistory(session.user.id, dramaId);
-    router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
+  }).current;
+
+  const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 80 }).current;
+
+  if (loading) {
+    return (
+      <ThemedView style={styles.container}>
+        <StatusBar style="light" />
+        <ActivityIndicator color="#ffffff" />
+      </ThemedView>
+    );
   }
 
-  const trending = [...dramas].sort((a, b) => b.viewCount - a.viewCount).slice(0, 4);
-  const newDramas = dramas.filter((drama) => drama.isNew);
+  if (error || items.length === 0) {
+    return (
+      <ThemedView style={styles.container}>
+        <StatusBar style="light" />
+        <ThemedText style={styles.emptyGlyph}>{error ? '⚠️' : '🍿'}</ThemedText>
+        <ThemedText style={styles.message}>{error ? '콘텐츠를 불러오지 못했어요.' : '아직 콘텐츠가 없어요.'}</ThemedText>
+      </ThemedView>
+    );
+  }
 
   return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.flex} edges={['top']}>
-        <ScrollView contentContainerStyle={styles.scrollContent}>
-          <ThemedText type="title" style={styles.pageTitle}>
-            추천
-          </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.pageSubtitle}>
-            취향에 맞춰 골라본 작품들이에요
-          </ThemedText>
-
-          {error ? (
-            <ThemedText type="small" themeColor="textSecondary" style={styles.pageSubtitle}>
-              작품을 불러오지 못했어요.
-            </ThemedText>
-          ) : loading ? null : (
-            <>
-              <DramaRow
-                title="인기 급상승"
-                data={trending}
-                onPressDrama={handlePressDrama}
-                favoriteIds={favoriteIds}
-                onToggleFavorite={isLoggedIn ? toggleFavorite : undefined}
-              />
-              <DramaRow
-                title="새로 나온 작품"
-                data={newDramas}
-                onPressDrama={handlePressDrama}
-                favoriteIds={favoriteIds}
-                onToggleFavorite={isLoggedIn ? toggleFavorite : undefined}
-              />
-            </>
-          )}
-        </ScrollView>
-      </SafeAreaView>
+    <ThemedView style={styles.container} onLayout={(e) => setPageHeight(e.nativeEvent.layout.height)}>
+      <StatusBar style="light" />
+      <FlatList
+        ref={listRef}
+        data={items}
+        keyExtractor={(item) => item.dramaId}
+        getItemLayout={(_, index) => ({ length: pageHeight, offset: pageHeight * index, index })}
+        pagingEnabled
+        showsVerticalScrollIndicator={false}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfig}
+        renderItem={({ item, index }) => (
+          <DiscoverReel
+            item={item}
+            height={pageHeight}
+            isFocused={index === focusedIndex}
+            isFavorite={favoriteIds.has(item.dramaId)}
+            onToggleFavorite={() => toggleFavorite(item.dramaId)}
+            onContinue={() => router.push({ pathname: '/drama/[id]', params: { id: item.dramaId } })}
+          />
+        )}
+      />
     </ThemedView>
   );
 }
@@ -71,20 +77,18 @@ export default function RecommendScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#000000',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: Spacing.two,
   },
-  flex: {
-    flex: 1,
+  emptyGlyph: {
+    fontSize: 40,
   },
-  scrollContent: {
-    paddingVertical: Spacing.three,
-  },
-  pageTitle: {
-    fontSize: 28,
-    lineHeight: 34,
-    paddingHorizontal: Spacing.three,
-  },
-  pageSubtitle: {
-    marginTop: Spacing.half,
-    paddingHorizontal: Spacing.three,
+  message: {
+    color: '#ffffff',
+    opacity: 0.8,
+    paddingHorizontal: Spacing.four,
+    textAlign: 'center',
   },
 });
