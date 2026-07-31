@@ -5,8 +5,10 @@ import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { SessionProvider, useSession } from '@/hooks/use-session';
+import { initAds } from '@/lib/init-ads';
 
 SplashScreen.preventAutoHideAsync();
+initAds();
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();

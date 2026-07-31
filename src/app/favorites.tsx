@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { FlatList, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,6 +10,7 @@ import { Spacing } from '@/constants/theme';
 import { useFavorites } from '@/hooks/use-favorites';
 import { useSession } from '@/hooks/use-session';
 import { supabase } from '@/lib/supabase';
+import { recordWatchHistory } from '@/lib/watch-history';
 
 type FavoriteRow = {
   dramas: {
@@ -24,6 +25,7 @@ type FavoriteRow = {
 };
 
 export default function FavoritesScreen() {
+  const router = useRouter();
   const { session, isLoggedIn, loading: sessionLoading } = useSession();
   const { favoriteIds, toggleFavorite } = useFavorites();
   const [dramas, setDramas] = useState<Drama[]>([]);
@@ -68,6 +70,13 @@ export default function FavoritesScreen() {
   // unfavoriting here removes the card immediately.
   const visibleDramas = dramas.filter((drama) => favoriteIds.has(drama.id));
 
+  function handlePressDrama(dramaId: string) {
+    if (session) {
+      recordWatchHistory(session.user.id, dramaId);
+    }
+    router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
+  }
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.flex} edges={['bottom']}>
@@ -85,7 +94,7 @@ export default function FavoritesScreen() {
             renderItem={({ item }) => (
               <DramaCard
                 drama={item}
-                onPress={() => {}}
+                onPress={() => handlePressDrama(item.id)}
                 isFavorite={favoriteIds.has(item.id)}
                 onToggleFavorite={() => toggleFavorite(item.id)}
               />
