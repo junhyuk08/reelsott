@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, StyleSheet, useWindowDimensions, type ViewToken } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -10,9 +10,14 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useDrama } from '@/hooks/use-dramas';
 import { useEpisodes, type Episode } from '@/hooks/use-episodes';
+import { useSession } from '@/hooks/use-session';
+import { recordWatchHistory } from '@/lib/watch-history';
+
+const WATCH_HISTORY_DEBOUNCE_MS = 1500;
 
 export default function WatchDramaScreen() {
   const { dramaId, startEpisodeId } = useLocalSearchParams<{ dramaId: string; startEpisodeId?: string }>();
+  const { session } = useSession();
   const { height } = useWindowDimensions();
   const { drama, loading: dramaLoading, error: dramaError } = useDrama(dramaId);
   const {
@@ -24,6 +29,20 @@ export default function WatchDramaScreen() {
   } = useEpisodes(dramaId);
   const listRef = useRef<FlatList<Episode>>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+
+  // Re-record watch history as focus moves between episodes (debounced so a
+  // quick flick through several reels doesn't fire one upsert per frame),
+  // so "continue watching" reflects how recently the drama was actually
+  // engaged with, not just the moment the feed was first opened.
+  useEffect(() => {
+    if (!session || focusedIndex == null) return;
+
+    const timer = setTimeout(() => {
+      recordWatchHistory(session.user.id, dramaId);
+    }, WATCH_HISTORY_DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  }, [session, dramaId, focusedIndex]);
 
   const initialIndex = useMemo(() => {
     const index = episodes.findIndex((episode) => episode.id === startEpisodeId);

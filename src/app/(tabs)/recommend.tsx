@@ -9,9 +9,12 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useDiscoverFeed, type DiscoverItem } from '@/hooks/use-discover-feed';
 import { useFavorites } from '@/hooks/use-favorites';
+import { useSession } from '@/hooks/use-session';
+import { recordWatchHistory } from '@/lib/watch-history';
 
 export default function RecommendScreen() {
   const router = useRouter();
+  const { session, isLoggedIn } = useSession();
   const { height: windowHeight } = useWindowDimensions();
   const { items, loading, error } = useDiscoverFeed();
   const { favoriteIds, toggleFavorite } = useFavorites();
@@ -27,6 +30,15 @@ export default function RecommendScreen() {
   }).current;
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 80 }).current;
+
+  function handleContinue(dramaId: string) {
+    if (!isLoggedIn || !session) {
+      router.push('/login');
+      return;
+    }
+    recordWatchHistory(session.user.id, dramaId);
+    router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
+  }
 
   if (loading) {
     return (
@@ -66,7 +78,7 @@ export default function RecommendScreen() {
             isFocused={index === focusedIndex}
             isFavorite={favoriteIds.has(item.dramaId)}
             onToggleFavorite={() => toggleFavorite(item.dramaId)}
-            onContinue={() => router.push({ pathname: '/drama/[id]', params: { id: item.dramaId } })}
+            onContinue={() => handleContinue(item.dramaId)}
           />
         )}
       />
