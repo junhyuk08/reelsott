@@ -1,0 +1,12 @@
+{
+  "agents": [
+    "code-review.md",
+    "dw-governed.md",
+    "dw-orchestrator.md",
+    "senior-backend-engineer.md",
+    "senior-front-engineer.md",
+    "senior-infra-engineer.md",
+    "senior-mobile-engineer.md",
+    "senior-qa-engineer.md"
+  ]
+}
