@@ -25,6 +25,8 @@ const KNOWN_ERROR_MESSAGES: Record<string, string> = {
   email_exists: '이미 가입된 이메일입니다.',
 };
 
+const NICKNAME_TAKEN_MESSAGE = '이미 사용 중인 닉네임입니다.';
+
 function toKoreanError(code: string | undefined, fallback: string) {
   return (code && KNOWN_ERROR_MESSAGES[code]) || fallback;
 }
@@ -101,6 +103,23 @@ export default function SignupScreen() {
     setError(null);
     setSubmitting(true);
 
+    const { data: nicknameAvailable, error: nicknameCheckError } = await supabase.rpc(
+      'check_nickname_available',
+      { p_nickname: trimmedNickname }
+    );
+
+    if (nicknameCheckError) {
+      setSubmitting(false);
+      setError('닉네임 확인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      return;
+    }
+
+    if (!nicknameAvailable) {
+      setSubmitting(false);
+      setError(NICKNAME_TAKEN_MESSAGE);
+      return;
+    }
+
     const { data, error: signupError } = await supabase.auth.signUp({
       email,
       password,
@@ -112,6 +131,21 @@ export default function SignupScreen() {
     setSubmitting(false);
 
     if (signupError) {
+      // The pre-check above covers the common case, but two signups can still
+      // race between it and the insert. When that happens, handle_new_user()
+      // fails on profiles_nickname_lower_idx and GoTrue surfaces it as an
+      // opaque 500 with no error detail (empty body) — indistinguishable from
+      // a real server error by code or message. Re-checking the nickname is
+      // the only reliable way to tell the two apart.
+      if (!KNOWN_ERROR_MESSAGES[signupError.code ?? '']) {
+        const { data: stillAvailable } = await supabase.rpc('check_nickname_available', {
+          p_nickname: trimmedNickname,
+        });
+        if (stillAvailable === false) {
+          setError(NICKNAME_TAKEN_MESSAGE);
+          return;
+        }
+      }
       setError(toKoreanError(signupError.code, signupError.message));
       return;
     }
