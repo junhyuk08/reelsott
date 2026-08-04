@@ -34,6 +34,14 @@ export default function HomeScreen() {
       return;
     }
     recordWatchHistory(session.user.id, dramaId);
+
+    // Resume at the last-watched episode if this drama has one, instead of
+    // dropping back to the detail/episode-list page.
+    const lastEpisodeId = recentlyWatched.find((drama) => drama.id === dramaId)?.lastEpisodeId;
+    if (lastEpisodeId) {
+      router.push({ pathname: '/watch/[dramaId]', params: { dramaId, startEpisodeId: lastEpisodeId } });
+      return;
+    }
     router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 

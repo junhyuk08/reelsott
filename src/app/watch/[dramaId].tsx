@@ -37,12 +37,14 @@ export default function WatchDramaScreen() {
   useEffect(() => {
     if (!session || focusedIndex == null) return;
 
+    const episodeId = episodes[focusedIndex]?.id;
+
     const timer = setTimeout(() => {
-      recordWatchHistory(session.user.id, dramaId);
+      recordWatchHistory(session.user.id, dramaId, episodeId);
     }, WATCH_HISTORY_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
-  }, [session, dramaId, focusedIndex]);
+  }, [session, dramaId, focusedIndex, episodes]);
 
   const initialIndex = useMemo(() => {
     const index = episodes.findIndex((episode) => episode.id === startEpisodeId);

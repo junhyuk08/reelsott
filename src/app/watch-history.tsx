@@ -24,6 +24,12 @@ export default function WatchHistoryScreen() {
     if (session) {
       recordWatchHistory(session.user.id, dramaId);
     }
+
+    const lastEpisodeId = dramas.find((drama) => drama.id === dramaId)?.lastEpisodeId;
+    if (lastEpisodeId) {
+      router.push({ pathname: '/watch/[dramaId]', params: { dramaId, startEpisodeId: lastEpisodeId } });
+      return;
+    }
     router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 

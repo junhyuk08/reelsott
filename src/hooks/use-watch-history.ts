@@ -4,7 +4,10 @@ import type { Drama } from '@/components/drama-card';
 import { useSession } from '@/hooks/use-session';
 import { supabase } from '@/lib/supabase';
 
+export type WatchedDrama = Drama & { lastEpisodeId: string | null };
+
 type WatchHistoryRow = {
+  last_episode_id: string | null;
   dramas: {
     id: string;
     title: string;
@@ -18,7 +21,7 @@ type WatchHistoryRow = {
 
 export function useWatchHistory(limit?: number) {
   const { session } = useSession();
-  const [dramas, setDramas] = useState<Drama[]>([]);
+  const [dramas, setDramas] = useState<WatchedDrama[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,7 +37,7 @@ export function useWatchHistory(limit?: number) {
     async function load() {
       let query = supabase
         .from('watch_history')
-        .select('dramas(id, title, thumbnail_url, genre, episode_count, is_new, view_count)')
+        .select('last_episode_id, dramas(id, title, thumbnail_url, genre, episode_count, is_new, view_count)')
         .order('watched_at', { ascending: false });
 
       if (limit !== undefined) {
@@ -50,16 +53,18 @@ export function useWatchHistory(limit?: number) {
       } else {
         setDramas(
           ((data ?? []) as unknown as WatchHistoryRow[])
-            .map((row) => row.dramas)
-            .filter((d): d is NonNullable<WatchHistoryRow['dramas']> => d !== null)
-            .map((d) => ({
-              id: d.id,
-              title: d.title,
-              thumbnailUrl: d.thumbnail_url,
-              genre: d.genre,
-              episodeCount: d.episode_count,
-              isNew: d.is_new,
-              viewCount: d.view_count,
+            .filter((row): row is WatchHistoryRow & { dramas: NonNullable<WatchHistoryRow['dramas']> } =>
+              row.dramas !== null
+            )
+            .map((row) => ({
+              id: row.dramas.id,
+              title: row.dramas.title,
+              thumbnailUrl: row.dramas.thumbnail_url,
+              genre: row.dramas.genre,
+              episodeCount: row.dramas.episode_count,
+              isNew: row.dramas.is_new,
+              viewCount: row.dramas.view_count,
+              lastEpisodeId: row.last_episode_id,
             }))
         );
       }
