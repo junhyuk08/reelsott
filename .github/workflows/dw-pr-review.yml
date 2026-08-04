@@ -33,7 +33,7 @@ concurrency:
 
 jobs:
   review:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     timeout-minutes: 12     # 도구 사용(파일 탐색) 리뷰라 여유
 
     steps:
