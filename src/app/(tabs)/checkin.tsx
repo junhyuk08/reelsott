@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabase';
 
 const ACCENT = '#FF3B5C';
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-const AD_REWARD_COIN = 20;
+const AD_REWARD_COIN = 30;
 
 type ProfileSummary = {
   consecutiveDays: number;
