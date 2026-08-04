@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,6 +13,7 @@ import { EPISODE_COIN_COST, useEpisodes, type Episode } from '@/hooks/use-episod
 import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
 import { incrementViewCount } from '@/lib/dramas';
+import { supabase } from '@/lib/supabase';
 import { recordWatchHistory } from '@/lib/watch-history';
 
 const ACCENT = '#FF3B5C';
@@ -24,10 +25,33 @@ export default function DramaDetailScreen() {
   const { session, isLoggedIn } = useSession();
   const { drama, loading: dramaLoading, error: dramaError } = useDrama(id);
   const { episodes, unlockedIds, loading: episodesLoading } = useEpisodes(id);
+  const [lastEpisodeId, setLastEpisodeId] = useState<string | null>(null);
 
   useEffect(() => {
     incrementViewCount(id);
   }, [id]);
+
+  useEffect(() => {
+    if (!session) {
+      setLastEpisodeId(null);
+      return;
+    }
+
+    let cancelled = false;
+
+    supabase
+      .from('watch_history')
+      .select('last_episode_id')
+      .eq('drama_id', id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setLastEpisodeId(data?.last_episode_id ?? null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session, id]);
 
   if (dramaLoading || episodesLoading) return null;
 
@@ -67,6 +91,18 @@ export default function DramaDetailScreen() {
     });
   }
 
+  function handleContinueWatching() {
+    if (!lastEpisodeId) return;
+
+    if (session) {
+      recordWatchHistory(session.user.id, id, lastEpisodeId);
+    }
+    router.push({
+      pathname: '/watch/[dramaId]',
+      params: { dramaId: id, startEpisodeId: lastEpisodeId },
+    });
+  }
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.flex} edges={['top']}>
@@ -88,9 +124,18 @@ export default function DramaDetailScreen() {
                   />
                 )}
               </View>
-              <ThemedText type="title" style={styles.title}>
-                {drama.title}
-              </ThemedText>
+              <View style={styles.titleRow}>
+                <ThemedText type="title" style={[styles.title, styles.titleText]} numberOfLines={1}>
+                  {drama.title}
+                </ThemedText>
+                {lastEpisodeId && (
+                  <Pressable onPress={handleContinueWatching} style={styles.continueButton}>
+                    <ThemedText type="small" style={styles.continueButtonText}>
+                      ▶ 이어서 보기
+                    </ThemedText>
+                  </Pressable>
+                )}
+              </View>
               <ThemedText type="small" themeColor="textSecondary">
                 {drama.genre} · {drama.episodeCount}화 (무료 {drama.freeEpisodeCount}화)
               </ThemedText>
@@ -173,6 +218,24 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     lineHeight: 30,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  titleText: {
+    flexShrink: 1,
+  },
+  continueButton: {
+    backgroundColor: ACCENT,
+    borderRadius: Spacing.five,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+  },
+  continueButtonText: {
+    color: '#ffffff',
+    fontWeight: '700',
   },
   episodeRow: {
     flexDirection: 'row',

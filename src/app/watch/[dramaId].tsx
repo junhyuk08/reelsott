@@ -35,6 +35,8 @@ export default function WatchDramaScreen() {
     return index >= 0 ? index : 0;
   }, [episodes, startEpisodeId]);
 
+  const pendingWatchHistoryRef = useRef<{ userId: string; dramaId: string; episodeId: string } | null>(null);
+
   // Re-records watch history (with the currently focused episode) as focus
   // moves between episodes, debounced so a quick flick through several reels
   // doesn't fire one upsert per frame. Keeps last_episode_id current so
@@ -45,12 +47,27 @@ export default function WatchDramaScreen() {
     const episode = episodes[focusedIndex ?? initialIndex];
     if (!episode) return;
 
+    pendingWatchHistoryRef.current = { userId: session.user.id, dramaId, episodeId: episode.id };
+
     const timer = setTimeout(() => {
       recordWatchHistory(session.user.id, dramaId, episode.id);
+      pendingWatchHistoryRef.current = null;
     }, WATCH_HISTORY_DEBOUNCE_MS);
 
     return () => clearTimeout(timer);
   }, [session, dramaId, episodes, focusedIndex, initialIndex]);
+
+  // Leaving the screen before the debounce above fires would otherwise drop
+  // the last episode actually watched (e.g. finishing an episode and
+  // immediately backing out) — flush it immediately on unmount instead.
+  useEffect(() => {
+    return () => {
+      const pending = pendingWatchHistoryRef.current;
+      if (pending) {
+        recordWatchHistory(pending.userId, pending.dramaId, pending.episodeId);
+      }
+    };
+  }, []);
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     const visible = viewableItems.find((item) => item.isViewable);

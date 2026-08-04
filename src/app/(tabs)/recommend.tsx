@@ -10,7 +10,6 @@ import { Spacing } from '@/constants/theme';
 import { useDiscoverFeed, type DiscoverItem } from '@/hooks/use-discover-feed';
 import { useFavorites } from '@/hooks/use-favorites';
 import { useSession } from '@/hooks/use-session';
-import { recordWatchHistory } from '@/lib/watch-history';
 
 export default function RecommendScreen() {
   const router = useRouter();
@@ -36,7 +35,6 @@ export default function RecommendScreen() {
       router.push('/login');
       return;
     }
-    recordWatchHistory(session.user.id, dramaId);
     router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 

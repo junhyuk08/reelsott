@@ -16,7 +16,6 @@ type DramaRowProps = {
   onToggleFavorite?: (dramaId: string) => void;
   onSeeAll?: () => void;
   showRank?: boolean;
-  onContinue?: (dramaId: string) => void;
 };
 
 export function DramaRow({
@@ -27,7 +26,6 @@ export function DramaRow({
   onToggleFavorite,
   onSeeAll,
   showRank,
-  onContinue,
 }: DramaRowProps) {
   return (
     <ThemedView style={styles.section}>
@@ -52,7 +50,6 @@ export function DramaRow({
               isFavorite={favoriteIds.has(drama.id)}
               onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(drama.id) : undefined}
               rank={showRank ? index + 1 : undefined}
-              onContinue={onContinue ? () => onContinue(drama.id) : undefined}
             />
           </View>
         ))}

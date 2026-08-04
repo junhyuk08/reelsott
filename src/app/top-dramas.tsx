@@ -10,7 +10,6 @@ import { Spacing } from '@/constants/theme';
 import { useDramas } from '@/hooks/use-dramas';
 import { useFavorites } from '@/hooks/use-favorites';
 import { useSession } from '@/hooks/use-session';
-import { recordWatchHistory } from '@/lib/watch-history';
 
 export default function TopDramasScreen() {
   const router = useRouter();
@@ -25,7 +24,6 @@ export default function TopDramasScreen() {
       router.push('/login');
       return;
     }
-    recordWatchHistory(session.user.id, dramaId);
     router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 

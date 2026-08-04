@@ -9,11 +9,10 @@ import { Spacing } from '@/constants/theme';
 import { useFavorites } from '@/hooks/use-favorites';
 import { useSession } from '@/hooks/use-session';
 import { useWatchHistory } from '@/hooks/use-watch-history';
-import { recordWatchHistory } from '@/lib/watch-history';
 
 export default function WatchHistoryScreen() {
   const router = useRouter();
-  const { session, isLoggedIn, loading: sessionLoading } = useSession();
+  const { isLoggedIn, loading: sessionLoading } = useSession();
   const { favoriteIds, toggleFavorite } = useFavorites();
   const { dramas, loading } = useWatchHistory();
 
@@ -21,9 +20,6 @@ export default function WatchHistoryScreen() {
   if (!isLoggedIn) return <Redirect href="/login" />;
 
   function handlePressDrama(dramaId: string) {
-    if (session) {
-      recordWatchHistory(session.user.id, dramaId);
-    }
     router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 

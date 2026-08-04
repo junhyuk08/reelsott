@@ -13,7 +13,7 @@ import { supabase } from '@/lib/supabase';
 
 const ACCENT = '#FF3B5C';
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
-const AD_REWARD_COIN = 20;
+const AD_REWARD_COIN = 30;
 
 type ProfileSummary = {
   consecutiveDays: number;
@@ -26,11 +26,17 @@ function toDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
 
-function lastSevenDays() {
+// Sunday through Saturday of the current calendar week, rather than a
+// rolling last-7-days window, so the row lines up with the weekday labels.
+function currentWeekDays() {
   const days: Date[] = [];
-  for (let i = 6; i >= 0; i -= 1) {
-    const date = new Date();
-    date.setDate(date.getDate() - i);
+  const today = new Date();
+  const sunday = new Date(today);
+  sunday.setDate(today.getDate() - today.getDay());
+
+  for (let i = 0; i < 7; i += 1) {
+    const date = new Date(sunday);
+    date.setDate(sunday.getDate() + i);
     days.push(date);
   }
   return days;
@@ -55,7 +61,7 @@ export default function CheckinScreen() {
     let cancelled = false;
 
     async function load() {
-      const sevenDaysAgo = toDateKey(lastSevenDays()[0]);
+      const weekStart = toDateKey(currentWeekDays()[0]);
 
       const [{ data: profileRow }, { data: logs }] = await Promise.all([
         supabase
@@ -63,7 +69,7 @@ export default function CheckinScreen() {
           .select('consecutive_days, coin_balance, last_attendance_date, last_ad_reward_date')
           .eq('id', userId)
           .single(),
-        supabase.from('attendance_logs').select('checked_date').gte('checked_date', sevenDaysAgo),
+        supabase.from('attendance_logs').select('checked_date').gte('checked_date', weekStart),
       ]);
 
       if (cancelled) return;
@@ -165,7 +171,7 @@ export default function CheckinScreen() {
 
         <ThemedView type="backgroundElement" style={styles.card}>
           <ThemedView type="backgroundElement" style={styles.weekRow}>
-            {lastSevenDays().map((date) => {
+            {currentWeekDays().map((date) => {
               const key = toDateKey(date);
               const checked = checkedDates.has(key);
               const isToday = key === todayKey;

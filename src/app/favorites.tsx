@@ -10,7 +10,6 @@ import { Spacing } from '@/constants/theme';
 import { useFavorites } from '@/hooks/use-favorites';
 import { useSession } from '@/hooks/use-session';
 import { supabase } from '@/lib/supabase';
-import { recordWatchHistory } from '@/lib/watch-history';
 
 type FavoriteRow = {
   dramas: {
@@ -71,9 +70,6 @@ export default function FavoritesScreen() {
   const visibleDramas = dramas.filter((drama) => favoriteIds.has(drama.id));
 
   function handlePressDrama(dramaId: string) {
-    if (session) {
-      recordWatchHistory(session.user.id, dramaId);
-    }
     router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 

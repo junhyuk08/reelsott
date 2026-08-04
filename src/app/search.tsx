@@ -11,7 +11,6 @@ import { useFavorites } from '@/hooks/use-favorites';
 import { useSearch } from '@/hooks/use-search';
 import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
-import { recordWatchHistory } from '@/lib/watch-history';
 
 export default function SearchScreen() {
   const theme = useTheme();
@@ -26,7 +25,6 @@ export default function SearchScreen() {
       router.push('/login');
       return;
     }
-    recordWatchHistory(session.user.id, dramaId);
     router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 
