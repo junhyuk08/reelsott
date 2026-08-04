@@ -1,7 +1,7 @@
 import Constants from 'expo-constants';
 import { Redirect, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -14,13 +14,13 @@ import { supabase } from '@/lib/supabase';
 const ACCENT = '#FF3B5C';
 const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
 
-type MenuItem = { label: string; href: '/favorites' | '/watch-history' | null };
+type MenuItem = { label: string; href: '/favorites' | '/watch-history' | '/notification-settings' | null };
 
 const MENU_ITEMS: MenuItem[] = [
   { label: '찜한 작품', href: '/favorites' },
   { label: '시청기록', href: '/watch-history' },
   { label: '구독 관리', href: null },
-  { label: '알림 설정', href: null },
+  { label: '알림 설정', href: '/notification-settings' },
   { label: '고객센터', href: null },
   { label: '공지사항', href: null },
   { label: '이용약관', href: null },
@@ -138,7 +138,8 @@ export default function MyPageScreen() {
               <ThemedText type="smallBold">{coinBalance.toLocaleString()} 코인</ThemedText>
             </View>
             <Pressable
-              onPress={() => Alert.alert('안내', '코인 충전 기능은 아직 준비 중이에요.')}
+              // 결제(PG) 연동 전까지는 코인을 얻을 수 있는 기존 화면(출석체크)으로 보낸다.
+              onPress={() => router.push('/checkin')}
               style={styles.chargeButton}>
               <ThemedText style={styles.chargeButtonText}>코인 충전하기</ThemedText>
             </Pressable>

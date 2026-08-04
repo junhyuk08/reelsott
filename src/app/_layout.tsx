@@ -37,6 +37,7 @@ function RootLayoutContent() {
         <Stack.Screen name="new-dramas" options={{ headerShown: true, title: '새로운 드라마' }} />
         <Stack.Screen name="top-dramas" options={{ headerShown: true, title: '실시간 Top 10' }} />
         <Stack.Screen name="search" options={{ headerShown: true, title: '검색' }} />
+        <Stack.Screen name="notification-settings" options={{ headerShown: true, title: '알림 설정' }} />
       </Stack>
     </>
   );
