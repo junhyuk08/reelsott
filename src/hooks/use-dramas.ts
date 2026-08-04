@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
 
 import type { Drama } from '@/components/drama-card';
 import { supabase } from '@/lib/supabase';
@@ -8,41 +9,43 @@ export function useDramas() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
 
-    async function load() {
-      const { data, error: fetchError } = await supabase
-        .from('dramas')
-        .select('id, title, thumbnail_url, genre, episode_count, is_new, view_count')
-        .eq('is_published', true)
-        .order('created_at', { ascending: true });
+      async function load() {
+        const { data, error: fetchError } = await supabase
+          .from('dramas')
+          .select('id, title, thumbnail_url, genre, episode_count, is_new, view_count')
+          .eq('is_published', true)
+          .order('created_at', { ascending: true });
 
-      if (cancelled) return;
+        if (cancelled) return;
 
-      if (fetchError) {
-        setError(fetchError.message);
-      } else {
-        setDramas(
-          (data ?? []).map((row) => ({
-            id: row.id,
-            title: row.title,
-            thumbnailUrl: row.thumbnail_url,
-            genre: row.genre,
-            episodeCount: row.episode_count,
-            isNew: row.is_new,
-            viewCount: row.view_count,
-          }))
-        );
+        if (fetchError) {
+          setError(fetchError.message);
+        } else {
+          setDramas(
+            (data ?? []).map((row) => ({
+              id: row.id,
+              title: row.title,
+              thumbnailUrl: row.thumbnail_url,
+              genre: row.genre,
+              episodeCount: row.episode_count,
+              isNew: row.is_new,
+              viewCount: row.view_count,
+            }))
+          );
+        }
+        setLoading(false);
       }
-      setLoading(false);
-    }
 
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+      load();
+      return () => {
+        cancelled = true;
+      };
+    }, [])
+  );
 
   return { dramas, loading, error };
 }

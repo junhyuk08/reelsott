@@ -59,7 +59,7 @@ export default function DramaDetailScreen() {
     }
 
     if (session) {
-      recordWatchHistory(session.user.id, id);
+      recordWatchHistory(session.user.id, id, episode.id);
     }
     router.push({
       pathname: '/watch/[dramaId]',

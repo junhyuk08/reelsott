@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import { FlatList, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -21,6 +21,11 @@ export default function HomeScreen() {
   const { dramas, loading, error } = useDramas();
   const { dramas: recentlyWatched } = useWatchHistory(10);
   const { favoriteIds, toggleFavorite } = useFavorites();
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  function handleLogoPress() {
+    scrollViewRef.current?.scrollTo({ y: 0, animated: true });
+  }
 
   const newDramas = useMemo(() => dramas.slice(-10).reverse(), [dramas]);
 
@@ -45,16 +50,33 @@ export default function HomeScreen() {
     router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 
+  // "시청 중인 드라마" row is only rendered when isLoggedIn, so session is
+  // guaranteed here. Jumps straight into the last watched episode when we
+  // have one recorded; older rows (or ones only opened from a listing, never
+  // played) have no last_episode_id, so those fall back to the drama detail
+  // screen — same as the recommend tab's own "이어서 보기" button.
+  function handleContinueWatching(dramaId: string) {
+    const lastEpisodeId = recentlyWatched.find((drama) => drama.id === dramaId)?.lastEpisodeId;
+    if (session) {
+      recordWatchHistory(session.user.id, dramaId, lastEpisodeId ?? undefined);
+    }
+    if (lastEpisodeId) {
+      router.push({ pathname: '/watch/[dramaId]', params: { dramaId, startEpisodeId: lastEpisodeId } });
+    } else {
+      router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
+    }
+  }
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.flex} edges={['top']}>
-        <HomeHeader />
+        <HomeHeader onLogoPress={handleLogoPress} />
         {error ? (
           <ThemedText type="small" themeColor="textSecondary" style={styles.message}>
             작품을 불러오지 못했어요.
           </ThemedText>
         ) : loading ? null : (
-          <ScrollView contentContainerStyle={styles.scrollContent}>
+          <ScrollView ref={scrollViewRef} contentContainerStyle={styles.scrollContent}>
             {isLoggedIn && recentlyWatched.length > 0 && (
               <DramaRow
                 title="시청 중인 드라마"
@@ -63,6 +85,7 @@ export default function HomeScreen() {
                 favoriteIds={favoriteIds}
                 onToggleFavorite={toggleFavorite}
                 onSeeAll={() => router.push('/watch-history')}
+                onContinue={handleContinueWatching}
               />
             )}
             {topDramas.length > 0 && (

@@ -31,12 +31,12 @@ export default function RecommendScreen() {
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 80 }).current;
 
-  function handleContinue(dramaId: string) {
+  function handleContinue(dramaId: string, episodeId: string) {
     if (!isLoggedIn || !session) {
       router.push('/login');
       return;
     }
-    recordWatchHistory(session.user.id, dramaId);
+    recordWatchHistory(session.user.id, dramaId, episodeId);
     router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 
@@ -78,7 +78,7 @@ export default function RecommendScreen() {
             isFocused={index === focusedIndex}
             isFavorite={favoriteIds.has(item.dramaId)}
             onToggleFavorite={() => toggleFavorite(item.dramaId)}
-            onContinue={() => handleContinue(item.dramaId)}
+            onContinue={() => handleContinue(item.dramaId, item.episodeId)}
           />
         )}
       />

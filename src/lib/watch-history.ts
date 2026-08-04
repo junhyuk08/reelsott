@@ -1,9 +1,10 @@
 import { supabase } from '@/lib/supabase';
 
-// episodeId is only passed where we actually know which episode is being
-// watched (the reel screen). Omitting it (e.g. just opening a drama's detail
-// page) leaves last_episode_id untouched on conflict, rather than clearing
-// the previously-recorded resume point.
+// episodeId is omitted (not just undefined) when the caller doesn't know a
+// specific episode (e.g. tapping a card just opens the drama synopsis) —
+// upsert only sets the columns present in the payload, so leaving the key
+// out preserves whatever last_episode_id was already recorded instead of
+// clobbering it with null.
 export async function recordWatchHistory(userId: string, dramaId: string, episodeId?: string) {
   await supabase.from('watch_history').upsert(
     {

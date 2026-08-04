@@ -19,9 +19,11 @@ type WatchHistoryRow = {
   } | null;
 };
 
+export type WatchHistoryDrama = Drama & { lastEpisodeId: string | null };
+
 export function useWatchHistory(limit?: number) {
   const { session } = useSession();
-  const [dramas, setDramas] = useState<WatchedDrama[]>([]);
+  const [dramas, setDramas] = useState<WatchHistoryDrama[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -53,9 +55,7 @@ export function useWatchHistory(limit?: number) {
       } else {
         setDramas(
           ((data ?? []) as unknown as WatchHistoryRow[])
-            .filter((row): row is WatchHistoryRow & { dramas: NonNullable<WatchHistoryRow['dramas']> } =>
-              row.dramas !== null
-            )
+            .filter((row): row is WatchHistoryRow & { dramas: NonNullable<WatchHistoryRow['dramas']> } => row.dramas !== null)
             .map((row) => ({
               id: row.dramas.id,
               title: row.dramas.title,

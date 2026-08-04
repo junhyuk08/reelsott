@@ -1,12 +1,16 @@
-import { StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
 
 const ACCENT = '#FF3B5C';
 
-export function Logo() {
-  return (
+type LogoProps = {
+  onPress?: () => void;
+};
+
+export function Logo({ onPress }: LogoProps) {
+  const content = (
     <View style={styles.container}>
       <View style={styles.badge}>
         <ThemedText style={styles.badgeGlyph}>▶</ThemedText>
@@ -16,6 +20,10 @@ export function Logo() {
       </ThemedText>
     </View>
   );
+
+  if (!onPress) return content;
+
+  return <Pressable onPress={onPress}>{content}</Pressable>;
 }
 
 const styles = StyleSheet.create({

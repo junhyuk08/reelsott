@@ -30,26 +30,27 @@ export default function WatchDramaScreen() {
   const listRef = useRef<FlatList<Episode>>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
 
-  // Re-record watch history as focus moves between episodes (debounced so a
-  // quick flick through several reels doesn't fire one upsert per frame),
-  // so "continue watching" reflects how recently the drama was actually
-  // engaged with, not just the moment the feed was first opened.
-  useEffect(() => {
-    if (!session || focusedIndex == null) return;
-
-    const episodeId = episodes[focusedIndex]?.id;
-
-    const timer = setTimeout(() => {
-      recordWatchHistory(session.user.id, dramaId, episodeId);
-    }, WATCH_HISTORY_DEBOUNCE_MS);
-
-    return () => clearTimeout(timer);
-  }, [session, dramaId, focusedIndex, episodes]);
-
   const initialIndex = useMemo(() => {
     const index = episodes.findIndex((episode) => episode.id === startEpisodeId);
     return index >= 0 ? index : 0;
   }, [episodes, startEpisodeId]);
+
+  // Re-records watch history (with the currently focused episode) as focus
+  // moves between episodes, debounced so a quick flick through several reels
+  // doesn't fire one upsert per frame. Keeps last_episode_id current so
+  // "이어서 보기" resumes at the episode actually being watched, not just the
+  // one the feed was opened on.
+  useEffect(() => {
+    if (!session) return;
+    const episode = episodes[focusedIndex ?? initialIndex];
+    if (!episode) return;
+
+    const timer = setTimeout(() => {
+      recordWatchHistory(session.user.id, dramaId, episode.id);
+    }, WATCH_HISTORY_DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  }, [session, dramaId, episodes, focusedIndex, initialIndex]);
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     const visible = viewableItems.find((item) => item.isViewable);
