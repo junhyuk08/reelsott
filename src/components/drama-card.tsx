@@ -5,6 +5,8 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 
+const ACCENT = '#FF3B5C';
+
 export type Drama = {
   id: string;
   title: string;
@@ -22,9 +24,10 @@ type DramaCardProps = {
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
   rank?: number;
+  onContinue?: () => void;
 };
 
-export function DramaCard({ drama, onPress, style, isFavorite, onToggleFavorite, rank }: DramaCardProps) {
+export function DramaCard({ drama, onPress, style, isFavorite, onToggleFavorite, rank, onContinue }: DramaCardProps) {
   return (
     <TouchableOpacity style={[styles.card, style]} onPress={onPress} activeOpacity={0.7}>
       <ThemedView style={styles.thumbnailWrapper}>
@@ -45,6 +48,13 @@ export function DramaCard({ drama, onPress, style, isFavorite, onToggleFavorite,
         {onToggleFavorite && (
           <Pressable onPress={onToggleFavorite} style={styles.favoriteButton} hitSlop={8}>
             <ThemedText style={styles.favoriteGlyph}>{isFavorite ? '♥' : '♡'}</ThemedText>
+          </Pressable>
+        )}
+        {onContinue && (
+          <Pressable onPress={onContinue} style={styles.continueButton} hitSlop={4}>
+            <ThemedText type="small" style={styles.continueButtonText} numberOfLines={1}>
+              ▶ 이어서 보기
+            </ThemedText>
           </Pressable>
         )}
       </ThemedView>
@@ -106,6 +116,20 @@ const styles = StyleSheet.create({
   favoriteGlyph: {
     color: '#FF3B5C',
     fontSize: 16,
+  },
+  continueButton: {
+    position: 'absolute',
+    left: Spacing.one,
+    right: Spacing.one,
+    bottom: Spacing.one,
+    backgroundColor: ACCENT,
+    borderRadius: Spacing.two,
+    paddingVertical: 6,
+    alignItems: 'center',
+  },
+  continueButtonText: {
+    color: '#ffffff',
+    fontWeight: '700',
   },
   title: {
     marginTop: Spacing.half + 4,

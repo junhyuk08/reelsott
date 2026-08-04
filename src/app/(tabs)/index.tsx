@@ -37,6 +37,23 @@ export default function HomeScreen() {
     router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 
+  // "시청 중인 드라마" row is only rendered when isLoggedIn, so session is
+  // guaranteed here. Jumps straight into the last watched episode when we
+  // have one recorded; older rows (or ones only opened from a listing, never
+  // played) have no last_episode_id, so those fall back to the drama detail
+  // screen — same as the recommend tab's own "이어서 보기" button.
+  function handleContinueWatching(dramaId: string) {
+    const lastEpisodeId = recentlyWatched.find((drama) => drama.id === dramaId)?.lastEpisodeId;
+    if (session) {
+      recordWatchHistory(session.user.id, dramaId, lastEpisodeId ?? undefined);
+    }
+    if (lastEpisodeId) {
+      router.push({ pathname: '/watch/[dramaId]', params: { dramaId, startEpisodeId: lastEpisodeId } });
+    } else {
+      router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
+    }
+  }
+
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.flex} edges={['top']}>
@@ -55,6 +72,7 @@ export default function HomeScreen() {
                 favoriteIds={favoriteIds}
                 onToggleFavorite={toggleFavorite}
                 onSeeAll={() => router.push('/watch-history')}
+                onContinue={handleContinueWatching}
               />
             )}
             {topDramas.length > 0 && (
