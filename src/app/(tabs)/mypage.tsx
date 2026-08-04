@@ -14,16 +14,19 @@ import { supabase } from '@/lib/supabase';
 const ACCENT = '#FF3B5C';
 const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
 
-type MenuItem = { label: string; href: '/favorites' | '/watch-history' | '/notification-settings' | null };
+type MenuItem = {
+  label: string;
+  href: '/favorites' | '/watch-history' | '/notification-settings' | '/support' | '/notices' | '/terms' | null;
+};
 
 const MENU_ITEMS: MenuItem[] = [
   { label: '찜한 작품', href: '/favorites' },
   { label: '시청기록', href: '/watch-history' },
   { label: '구독 관리', href: null },
   { label: '알림 설정', href: '/notification-settings' },
-  { label: '고객센터', href: null },
-  { label: '공지사항', href: null },
-  { label: '이용약관', href: null },
+  { label: '고객센터', href: '/support' },
+  { label: '공지사항', href: '/notices' },
+  { label: '이용약관', href: '/terms' },
 ];
 
 async function extractErrorMessage(error: unknown, fallback: string) {
