@@ -169,7 +169,7 @@ const styles = StyleSheet.create({
   genreText: {
     color: '#ffffff',
     fontSize: 12,
-    lineHeight: 16,
+    lineHeight: 18,
     fontWeight: '600',
   },
   actions: {

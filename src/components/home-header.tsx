@@ -9,7 +9,11 @@ import { useTheme } from '@/hooks/use-theme';
 
 const ACCENT = '#FF3B5C';
 
-export function HomeHeader() {
+type HomeHeaderProps = {
+  onLogoPress?: () => void;
+};
+
+export function HomeHeader({ onLogoPress }: HomeHeaderProps) {
   const theme = useTheme();
   const router = useRouter();
   const { session, isLoggedIn } = useSession();
@@ -18,7 +22,7 @@ export function HomeHeader() {
 
   return (
     <View style={styles.container}>
-      <Logo />
+      <Logo onPress={onLogoPress} />
 
       <Pressable
         onPress={() => router.push('/search')}
