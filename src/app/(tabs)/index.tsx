@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { FlatList, ScrollView, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -21,13 +21,6 @@ export default function HomeScreen() {
   const { dramas, loading, error } = useDramas();
   const { dramas: recentlyWatched } = useWatchHistory(10);
   const { favoriteIds, toggleFavorite } = useFavorites();
-  const [query, setQuery] = useState('');
-
-  const filteredDramas = useMemo(() => {
-    const trimmed = query.trim();
-    if (!trimmed) return dramas;
-    return dramas.filter((drama) => drama.title.includes(trimmed));
-  }, [dramas, query]);
 
   const newDramas = useMemo(() => dramas.slice(-10).reverse(), [dramas]);
 
@@ -47,7 +40,7 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.flex} edges={['top']}>
-        <HomeHeader query={query} onQueryChange={setQuery} />
+        <HomeHeader />
         {error ? (
           <ThemedText type="small" themeColor="textSecondary" style={styles.message}>
             작품을 불러오지 못했어요.
@@ -98,7 +91,7 @@ export default function HomeScreen() {
               모든 드라마 보기
             </ThemedText>
             <FlatList
-              data={filteredDramas}
+              data={dramas}
               keyExtractor={(item) => item.id}
               numColumns={2}
               scrollEnabled={false}
@@ -114,7 +107,7 @@ export default function HomeScreen() {
               )}
               ListEmptyComponent={
                 <ThemedText type="small" themeColor="textSecondary" style={styles.emptyText}>
-                  검색 결과가 없어요
+                  아직 등록된 작품이 없어요.
                 </ThemedText>
               }
             />

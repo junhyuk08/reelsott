@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { Pressable, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, StyleSheet, View } from 'react-native';
 
 import { Logo } from '@/components/logo';
 import { ThemedText } from '@/components/themed-text';
@@ -9,12 +9,7 @@ import { useTheme } from '@/hooks/use-theme';
 
 const ACCENT = '#FF3B5C';
 
-type HomeHeaderProps = {
-  query: string;
-  onQueryChange: (query: string) => void;
-};
-
-export function HomeHeader({ query, onQueryChange }: HomeHeaderProps) {
+export function HomeHeader() {
   const theme = useTheme();
   const router = useRouter();
   const { session, isLoggedIn } = useSession();
@@ -25,15 +20,13 @@ export function HomeHeader({ query, onQueryChange }: HomeHeaderProps) {
     <View style={styles.container}>
       <Logo />
 
-      <TextInput
-        style={[styles.searchInput, { backgroundColor: theme.backgroundElement, color: theme.text }]}
-        placeholder="제목 검색"
-        placeholderTextColor={theme.textSecondary}
-        value={query}
-        onChangeText={onQueryChange}
-        autoCapitalize="none"
-        returnKeyType="search"
-      />
+      <Pressable
+        onPress={() => router.push('/search')}
+        style={[styles.searchInput, { backgroundColor: theme.backgroundElement }]}>
+        <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
+          제목, 장르로 검색
+        </ThemedText>
+      </Pressable>
 
       {isLoggedIn ? (
         <View style={styles.loggedInArea}>
@@ -72,7 +65,7 @@ const styles = StyleSheet.create({
     height: 36,
     borderRadius: Spacing.five,
     paddingHorizontal: Spacing.three,
-    fontSize: 14,
+    justifyContent: 'center',
   },
   authButtons: {
     flexDirection: 'row',
