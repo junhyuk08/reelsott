@@ -18,6 +18,20 @@ AdMob 리워드 광고 대신 자체 준비한 영상을 보여주고 코인을 
 - 파일 올린 뒤 "Get URL" 또는 위 URL 패턴대로 접근하면 재생 가능한 링크가 나옵니다.
 - 폴더 구조는 자유 (예: `ad-videos/default.mp4` 하나만 두거나, 여러 개 두고 프론트에서 랜덤/순차 재생해도 됩니다 — 이 부분은 프론트 판단)
 
+## 2-1. 실제 업로드된 영상 (바로 쓸 수 있음)
+
+아래 5개는 이미 `ad-videos` 버킷에 업로드해뒀고, 전부 public URL로 재생 확인(HTTP 200, 파일 크기 일치)했습니다. 프론트에서 바로 이 URL로 테스트하면 됩니다 — 추가 업로드 작업 필요 없습니다.
+
+| 파일명 | Public URL |
+|---|---|
+| `20240716_095803.mp4` | `https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/ad-videos/20240716_095803.mp4` |
+| `KakaoTalk_20260805_102309189.mp4` | `https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/ad-videos/KakaoTalk_20260805_102309189.mp4` |
+| `KakaoTalk_20260805_102325047.mp4` | `https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/ad-videos/KakaoTalk_20260805_102325047.mp4` |
+| `KakaoTalk_20260805_102344338.mp4` | `https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/ad-videos/KakaoTalk_20260805_102344338.mp4` |
+| `KakaoTalk_20260805_102407632.mp4` | `https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/ad-videos/KakaoTalk_20260805_102407632.mp4` |
+
+추가로 영상을 더 넣고 싶으면 아래 2번 방법대로 Studio에서 직접 올리면 됩니다.
+
 ## 3. 프론트에서 만들어야 하는 것
 
 - 영상 재생 화면(또는 기존 광고 트리거 지점에 자체 영상 플레이어로 교체)
