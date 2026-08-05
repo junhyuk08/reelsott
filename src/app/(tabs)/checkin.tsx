@@ -1,12 +1,13 @@
+import { useEventListener } from 'expo';
 import { Redirect } from 'expo-router';
+import { useVideoPlayer, VideoView } from 'expo-video';
 import { useEffect, useState } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
-import { useAdReward } from '@/hooks/use-ad-reward';
 import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
 import { supabase } from '@/lib/supabase';
@@ -14,6 +15,49 @@ import { supabase } from '@/lib/supabase';
 const ACCENT = '#FF3B5C';
 const WEEKDAY_LABELS = ['일', '월', '화', '수', '목', '금', '토'];
 const AD_REWARD_COIN = 30;
+
+// AdMob rewarded ads were dropped for age-verification policy reasons — these
+// self-hosted clips play instead, and finishing one calls the same
+// claim_ad_reward RPC an AdMob "earned reward" callback used to.
+// See docs/ad-video-reward-handoff.md.
+const AD_VIDEO_URLS = [
+  'https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/ad-videos/20240716_095803.mp4',
+  'https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/ad-videos/KakaoTalk_20260805_102309189.mp4',
+  'https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/ad-videos/KakaoTalk_20260805_102325047.mp4',
+  'https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/ad-videos/KakaoTalk_20260805_102344338.mp4',
+  'https://chytyudprezhfmgndwtd.supabase.co/storage/v1/object/public/ad-videos/KakaoTalk_20260805_102407632.mp4',
+];
+
+function AdVideoOverlay({ url, onEarned, onClose }: { url: string; onEarned: () => void; onClose: () => void }) {
+  const player = useVideoPlayer(url);
+  // No skip button while playing — like a real rewarded ad, closing early
+  // must not be possible. The X only appears once playToEnd actually fires.
+  const [finished, setFinished] = useState(false);
+
+  // Matches episode-reel.tsx: calling .play() inside useVideoPlayer's own
+  // init callback fires before the source has loaded, so the request gets
+  // dropped — re-issuing it from an effect keyed on the player instance
+  // (created once per url) is what actually starts playback.
+  useEffect(() => {
+    player.play();
+  }, [player]);
+
+  useEventListener(player, 'playToEnd', () => {
+    setFinished(true);
+    onEarned();
+  });
+
+  return (
+    <View style={styles.adVideoOverlay}>
+      <VideoView player={player} style={styles.adVideoPlayer} nativeControls={false} contentFit="contain" />
+      {finished && (
+        <Pressable onPress={onClose} style={styles.adVideoCloseButton} hitSlop={8}>
+          <ThemedText style={styles.adVideoCloseText}>✕</ThemedText>
+        </Pressable>
+      )}
+    </View>
+  );
+}
 
 type ProfileSummary = {
   consecutiveDays: number;
@@ -53,7 +97,7 @@ export default function CheckinScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [claimingAd, setClaimingAd] = useState(false);
   const [adError, setAdError] = useState<string | null>(null);
-  const adReward = useAdReward();
+  const [adVideoUrl, setAdVideoUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (!session) return;
@@ -92,36 +136,6 @@ export default function CheckinScreen() {
     };
   }, [session]);
 
-  useEffect(() => {
-    if (!adReward.isEarnedReward) return;
-
-    let cancelled = false;
-
-    async function claim() {
-      setClaimingAd(true);
-      setAdError(null);
-
-      const { data, error: rpcError } = await supabase.rpc('claim_ad_reward');
-
-      if (cancelled) return;
-      setClaimingAd(false);
-
-      if (rpcError) {
-        setAdError(rpcError.message);
-        return;
-      }
-
-      setProfile((prev) =>
-        prev ? { ...prev, coinBalance: data.coin_balance, lastAdRewardDate: toDateKey(new Date()) } : prev
-      );
-    }
-
-    claim();
-    return () => {
-      cancelled = true;
-    };
-  }, [adReward.isEarnedReward]);
-
   if (loading) return null;
   if (!isLoggedIn) return <Redirect href="/login" />;
   if (loadingData) return null;
@@ -156,8 +170,26 @@ export default function CheckinScreen() {
   }
 
   function handleWatchAd() {
-    if (claimedAdToday || claimingAd || !adReward.isReady) return;
-    adReward.show();
+    if (claimedAdToday || claimingAd) return;
+    setAdVideoUrl(AD_VIDEO_URLS[Math.floor(Math.random() * AD_VIDEO_URLS.length)]);
+  }
+
+  async function handleAdVideoEarned() {
+    setClaimingAd(true);
+    setAdError(null);
+
+    const { data, error: rpcError } = await supabase.rpc('claim_ad_reward');
+
+    setClaimingAd(false);
+
+    if (rpcError) {
+      setAdError(rpcError.message);
+      return;
+    }
+
+    setProfile((prev) =>
+      prev ? { ...prev, coinBalance: data.coin_balance, lastAdRewardDate: toDateKey(new Date()) } : prev
+    );
   }
 
   return (
@@ -233,31 +265,22 @@ export default function CheckinScreen() {
             </ThemedText>
           )}
 
-          {adReward.isSupported ? (
-            <Pressable
-              onPress={handleWatchAd}
-              disabled={claimedAdToday || claimingAd || !adReward.isReady}
-              style={[
-                styles.adButton,
-                (claimedAdToday || claimingAd || !adReward.isReady) && styles.checkinButtonDone,
-              ]}>
-              <ThemedText style={styles.checkinButtonText}>
-                {claimedAdToday
-                  ? '오늘 보너스 수령 완료'
-                  : claimingAd
-                    ? '지급 중...'
-                    : adReward.isReady
-                      ? '광고 보고 코인 받기'
-                      : '광고 준비 중...'}
-              </ThemedText>
-            </Pressable>
-          ) : (
-            <ThemedText type="small" themeColor="textSecondary" style={styles.adUnsupportedText}>
-              이 플랫폼에서는 아직 지원하지 않아요
+          <Pressable
+            onPress={handleWatchAd}
+            disabled={claimedAdToday || claimingAd}
+            style={[styles.adButton, (claimedAdToday || claimingAd) && styles.checkinButtonDone]}>
+            <ThemedText style={styles.checkinButtonText}>
+              {claimedAdToday ? '오늘 보너스 수령 완료' : claimingAd ? '지급 중...' : '광고 보고 코인 받기'}
             </ThemedText>
-          )}
+          </Pressable>
         </ThemedView>
       </SafeAreaView>
+
+      <Modal visible={adVideoUrl !== null} animationType="fade" onRequestClose={() => {}}>
+        {adVideoUrl && (
+          <AdVideoOverlay url={adVideoUrl} onEarned={handleAdVideoEarned} onClose={() => setAdVideoUrl(null)} />
+        )}
+      </Modal>
     </ThemedView>
   );
 }
@@ -352,8 +375,27 @@ const styles = StyleSheet.create({
     marginTop: Spacing.three,
     boxShadow: '0 6px 10px rgba(255, 59, 92, 0.25)',
   },
-  adUnsupportedText: {
-    marginTop: Spacing.three,
-    textAlign: 'center',
+  adVideoOverlay: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  adVideoPlayer: {
+    flex: 1,
+  },
+  adVideoCloseButton: {
+    position: 'absolute',
+    top: Spacing.five,
+    right: Spacing.three,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  adVideoCloseText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });
