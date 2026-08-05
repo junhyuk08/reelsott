@@ -40,8 +40,9 @@ export default function NotificationSettingsScreen() {
     };
   }, [session]);
 
-  if (loading || loadingSetting) return null;
+  if (loading) return null;
   if (!isLoggedIn || !session) return <Redirect href="/login" />;
+  if (loadingSetting) return null;
 
   async function handleToggle(value: boolean) {
     if (!session) return;

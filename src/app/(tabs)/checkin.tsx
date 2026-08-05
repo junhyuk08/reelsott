@@ -122,8 +122,9 @@ export default function CheckinScreen() {
     };
   }, [adReward.isEarnedReward]);
 
-  if (loading || loadingData) return null;
+  if (loading) return null;
   if (!isLoggedIn) return <Redirect href="/login" />;
+  if (loadingData) return null;
 
   const todayKey = toDateKey(new Date());
   const checkedToday = profile?.lastAttendanceDate === todayKey;
