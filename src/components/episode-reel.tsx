@@ -16,15 +16,30 @@ type EpisodeReelProps = {
   isLocked: boolean;
   onUnlock: () => Promise<UnlockResult>;
   onFinish: () => void;
+  onPlaybackStart?: () => void;
 };
 
-export function EpisodeReel({ episode, height, isFocused, isLocked, onUnlock, onFinish }: EpisodeReelProps) {
+export function EpisodeReel({
+  episode,
+  height,
+  isFocused,
+  isLocked,
+  onUnlock,
+  onFinish,
+  onPlaybackStart,
+}: EpisodeReelProps) {
   const [unlocking, setUnlocking] = useState(false);
   const player = useVideoPlayer(episode.videoUrl, (player) => {
     player.loop = false;
   });
 
   useEventListener(player, 'playToEnd', onFinish);
+  // `.play()` below is just a request — playingChange with isPlaying: true is
+  // the actual signal that frames are coming out (accounts for buffering,
+  // autoplay being blocked, etc.), which is what watch history should key off.
+  useEventListener(player, 'playingChange', ({ isPlaying }) => {
+    if (isPlaying) onPlaybackStart?.();
+  });
 
   useEffect(() => {
     if (isLocked) return;

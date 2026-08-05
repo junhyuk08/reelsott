@@ -32,6 +32,9 @@ export default function HomeScreen() {
 
   const trending = useMemo(() => topDramas.slice(0, 4), [topDramas]);
 
+  // "이어서 보기" now lives on the drama detail screen (next to the title),
+  // not on the card — every card tap, including from "시청 중인 드라마",
+  // consistently opens the detail screen.
   function handlePressDrama(dramaId: string) {
     if (!isLoggedIn || !session) {
       router.push('/login');

@@ -14,7 +14,6 @@ import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
 import { incrementViewCount } from '@/lib/dramas';
 import { supabase } from '@/lib/supabase';
-import { recordWatchHistory } from '@/lib/watch-history';
 
 const ACCENT = '#FF3B5C';
 
@@ -31,17 +30,20 @@ export default function DramaDetailScreen() {
     incrementViewCount(id);
   }, [id]);
 
+  // Drives the "이어서 보기" button next to the title — only known once this
+  // resolves, so the button simply doesn't render until then (or at all, if
+  // this drama has never actually been watched).
   useEffect(() => {
     if (!session) {
       setLastEpisodeId(null);
       return;
     }
-
     let cancelled = false;
 
     supabase
       .from('watch_history')
       .select('last_episode_id')
+      .eq('user_id', session.user.id)
       .eq('drama_id', id)
       .maybeSingle()
       .then(({ data }) => {
@@ -82,21 +84,19 @@ export default function DramaDetailScreen() {
       return;
     }
 
-    if (session) {
-      recordWatchHistory(session.user.id, id, episode.id);
-    }
+    // No recordWatchHistory call here — watch/[dramaId].tsx now records it
+    // itself once this episode actually starts playing, not just because it
+    // was tapped/navigated to.
     router.push({
       pathname: '/watch/[dramaId]',
       params: { dramaId: id, startEpisodeId: episode.id },
     });
   }
 
+  // last_episode_id is set by the reel screen once playback actually starts,
+  // so this is a pure navigation — no recordWatchHistory call needed here.
   function handleContinueWatching() {
     if (!lastEpisodeId) return;
-
-    if (session) {
-      recordWatchHistory(session.user.id, id, lastEpisodeId);
-    }
     router.push({
       pathname: '/watch/[dramaId]',
       params: { dramaId: id, startEpisodeId: lastEpisodeId },
@@ -125,12 +125,12 @@ export default function DramaDetailScreen() {
                 )}
               </View>
               <View style={styles.titleRow}>
-                <ThemedText type="title" style={[styles.title, styles.titleText]} numberOfLines={1}>
+                <ThemedText type="title" style={styles.title}>
                   {drama.title}
                 </ThemedText>
                 {lastEpisodeId && (
-                  <Pressable onPress={handleContinueWatching} style={styles.continueButton}>
-                    <ThemedText type="small" style={styles.continueButtonText}>
+                  <Pressable onPress={handleContinueWatching} style={styles.continueButton} hitSlop={4}>
+                    <ThemedText type="small" style={styles.continueButtonText} numberOfLines={1}>
                       ▶ 이어서 보기
                     </ThemedText>
                   </Pressable>
@@ -215,19 +215,19 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
   },
-  title: {
-    fontSize: 24,
-    lineHeight: 30,
-  },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: Spacing.two,
   },
-  titleText: {
+  title: {
     flexShrink: 1,
+    fontSize: 24,
+    lineHeight: 30,
   },
   continueButton: {
+    flexShrink: 0,
     backgroundColor: ACCENT,
     borderRadius: Spacing.five,
     paddingHorizontal: Spacing.three,

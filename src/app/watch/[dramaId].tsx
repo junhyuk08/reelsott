@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { FlatList, StyleSheet, useWindowDimensions, type ViewToken } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -12,8 +12,6 @@ import { useDrama } from '@/hooks/use-dramas';
 import { useEpisodes, type Episode } from '@/hooks/use-episodes';
 import { useSession } from '@/hooks/use-session';
 import { recordWatchHistory } from '@/lib/watch-history';
-
-const WATCH_HISTORY_DEBOUNCE_MS = 1500;
 
 export default function WatchDramaScreen() {
   const { dramaId, startEpisodeId } = useLocalSearchParams<{ dramaId: string; startEpisodeId?: string }>();
@@ -29,45 +27,25 @@ export default function WatchDramaScreen() {
   } = useEpisodes(dramaId);
   const listRef = useRef<FlatList<Episode>>(null);
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
+  // Tracks the episode last recorded to watch history, so a single episode's
+  // playingChange toggling (pause/resume, brief buffering stalls) doesn't
+  // upsert on every rising edge — only actually switching episodes does.
+  const lastRecordedEpisodeIdRef = useRef<string | null>(null);
 
   const initialIndex = useMemo(() => {
     const index = episodes.findIndex((episode) => episode.id === startEpisodeId);
     return index >= 0 ? index : 0;
   }, [episodes, startEpisodeId]);
 
-  const pendingWatchHistoryRef = useRef<{ userId: string; dramaId: string; episodeId: string } | null>(null);
-
-  // Re-records watch history (with the currently focused episode) as focus
-  // moves between episodes, debounced so a quick flick through several reels
-  // doesn't fire one upsert per frame. Keeps last_episode_id current so
-  // "이어서 보기" resumes at the episode actually being watched, not just the
-  // one the feed was opened on.
-  useEffect(() => {
+  // Records watch history when an episode actually starts playing (not just
+  // when it scrolls into view), so last_episode_id reflects what was really
+  // watched.
+  function handlePlaybackStart(episodeId: string) {
     if (!session) return;
-    const episode = episodes[focusedIndex ?? initialIndex];
-    if (!episode) return;
-
-    pendingWatchHistoryRef.current = { userId: session.user.id, dramaId, episodeId: episode.id };
-
-    const timer = setTimeout(() => {
-      recordWatchHistory(session.user.id, dramaId, episode.id);
-      pendingWatchHistoryRef.current = null;
-    }, WATCH_HISTORY_DEBOUNCE_MS);
-
-    return () => clearTimeout(timer);
-  }, [session, dramaId, episodes, focusedIndex, initialIndex]);
-
-  // Leaving the screen before the debounce above fires would otherwise drop
-  // the last episode actually watched (e.g. finishing an episode and
-  // immediately backing out) — flush it immediately on unmount instead.
-  useEffect(() => {
-    return () => {
-      const pending = pendingWatchHistoryRef.current;
-      if (pending) {
-        recordWatchHistory(pending.userId, pending.dramaId, pending.episodeId);
-      }
-    };
-  }, []);
+    if (lastRecordedEpisodeIdRef.current === episodeId) return;
+    lastRecordedEpisodeIdRef.current = episodeId;
+    recordWatchHistory(session.user.id, dramaId, episodeId);
+  }
 
   const onViewableItemsChanged = useRef(({ viewableItems }: { viewableItems: ViewToken[] }) => {
     const visible = viewableItems.find((item) => item.isViewable);
@@ -136,6 +114,7 @@ export default function WatchDramaScreen() {
             isLocked={item.episodeNumber > freeEpisodeCount && !unlockedIds.has(item.id)}
             onUnlock={() => unlockEpisode(item.id)}
             onFinish={handleFinish}
+            onPlaybackStart={() => handlePlaybackStart(item.id)}
           />
         )}
       />
