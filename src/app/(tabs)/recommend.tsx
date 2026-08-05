@@ -30,7 +30,7 @@ export default function RecommendScreen() {
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 80 }).current;
 
-  function handleContinue(dramaId: string) {
+  function handleContinue(dramaId: string, episodeId: string) {
     if (!isLoggedIn || !session) {
       router.push('/login');
       return;
@@ -76,7 +76,7 @@ export default function RecommendScreen() {
             isFocused={index === focusedIndex}
             isFavorite={favoriteIds.has(item.dramaId)}
             onToggleFavorite={() => toggleFavorite(item.dramaId)}
-            onContinue={() => handleContinue(item.dramaId)}
+            onContinue={() => handleContinue(item.dramaId, item.episodeId)}
           />
         )}
       />

@@ -10,7 +10,10 @@ const CARD_WIDTH = 140;
 
 type DramaRowProps = {
   title: string;
-  data: Drama[];
+  // lastEpisodeId is optional because most rows (top10/trending/new) use
+  // plain Drama[] — only the continue-watching row's WatchHistoryDrama[]
+  // actually has it, which is what gates the "이어서 보기" button per card.
+  data: (Drama & { lastEpisodeId?: string | null })[];
   onPressDrama: (dramaId: string) => void;
   favoriteIds: Set<string>;
   onToggleFavorite?: (dramaId: string) => void;

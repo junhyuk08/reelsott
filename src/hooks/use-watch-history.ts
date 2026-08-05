@@ -5,6 +5,8 @@ import type { Drama } from '@/components/drama-card';
 import { useSession } from '@/hooks/use-session';
 import { supabase } from '@/lib/supabase';
 
+export type WatchedDrama = Drama & { lastEpisodeId: string | null };
+
 type WatchHistoryRow = {
   last_episode_id: string | null;
   dramas: {
