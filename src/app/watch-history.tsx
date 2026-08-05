@@ -27,21 +27,6 @@ export default function WatchHistoryScreen() {
     router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 
-  // Mirrors the home screen's own continue-watching handler — DramaCard only
-  // renders the "이어서 보기" button when a lastEpisodeId is passed in, so
-  // this always has one whenever it's actually called.
-  function handleContinueWatching(dramaId: string) {
-    const lastEpisodeId = dramas.find((drama) => drama.id === dramaId)?.lastEpisodeId;
-    if (session) {
-      recordWatchHistory(session.user.id, dramaId, lastEpisodeId ?? undefined);
-    }
-    if (lastEpisodeId) {
-      router.push({ pathname: '/watch/[dramaId]', params: { dramaId, startEpisodeId: lastEpisodeId } });
-    } else {
-      router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
-    }
-  }
-
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.flex} edges={['bottom']}>
@@ -62,7 +47,6 @@ export default function WatchHistoryScreen() {
                 onPress={() => handlePressDrama(item.id)}
                 isFavorite={favoriteIds.has(item.id)}
                 onToggleFavorite={() => toggleFavorite(item.id)}
-                onContinue={item.lastEpisodeId ? () => handleContinueWatching(item.id) : undefined}
               />
             )}
           />

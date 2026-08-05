@@ -33,38 +33,16 @@ export default function HomeScreen() {
 
   const trending = useMemo(() => topDramas.slice(0, 4), [topDramas]);
 
+  // "이어서 보기" now lives on the drama detail screen (next to the title),
+  // not on the card — every card tap, including from "시청 중인 드라마",
+  // consistently opens the detail screen.
   function handlePressDrama(dramaId: string) {
     if (!isLoggedIn || !session) {
       router.push('/login');
       return;
     }
     recordWatchHistory(session.user.id, dramaId);
-
-    // Resume at the last-watched episode if this drama has one, instead of
-    // dropping back to the detail/episode-list page.
-    const lastEpisodeId = recentlyWatched.find((drama) => drama.id === dramaId)?.lastEpisodeId;
-    if (lastEpisodeId) {
-      router.push({ pathname: '/watch/[dramaId]', params: { dramaId, startEpisodeId: lastEpisodeId } });
-      return;
-    }
     router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
-  }
-
-  // "시청 중인 드라마" row is only rendered when isLoggedIn, so session is
-  // guaranteed here. Jumps straight into the last watched episode when we
-  // have one recorded; older rows (or ones only opened from a listing, never
-  // played) have no last_episode_id, so those fall back to the drama detail
-  // screen — same as the recommend tab's own "이어서 보기" button.
-  function handleContinueWatching(dramaId: string) {
-    const lastEpisodeId = recentlyWatched.find((drama) => drama.id === dramaId)?.lastEpisodeId;
-    if (session) {
-      recordWatchHistory(session.user.id, dramaId, lastEpisodeId ?? undefined);
-    }
-    if (lastEpisodeId) {
-      router.push({ pathname: '/watch/[dramaId]', params: { dramaId, startEpisodeId: lastEpisodeId } });
-    } else {
-      router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
-    }
   }
 
   return (
@@ -85,7 +63,6 @@ export default function HomeScreen() {
                 favoriteIds={favoriteIds}
                 onToggleFavorite={toggleFavorite}
                 onSeeAll={() => router.push('/watch-history')}
-                onContinue={handleContinueWatching}
               />
             )}
             {topDramas.length > 0 && (

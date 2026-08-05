@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, FlatList, Pressable, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -13,7 +13,7 @@ import { EPISODE_COIN_COST, useEpisodes, type Episode } from '@/hooks/use-episod
 import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
 import { incrementViewCount } from '@/lib/dramas';
-import { recordWatchHistory } from '@/lib/watch-history';
+import { supabase } from '@/lib/supabase';
 
 const ACCENT = '#FF3B5C';
 
@@ -24,10 +24,36 @@ export default function DramaDetailScreen() {
   const { session, isLoggedIn } = useSession();
   const { drama, loading: dramaLoading, error: dramaError } = useDrama(id);
   const { episodes, unlockedIds, loading: episodesLoading } = useEpisodes(id);
+  const [lastEpisodeId, setLastEpisodeId] = useState<string | null>(null);
 
   useEffect(() => {
     incrementViewCount(id);
   }, [id]);
+
+  // Drives the "이어서 보기" button next to the title — only known once this
+  // resolves, so the button simply doesn't render until then (or at all, if
+  // this drama has never actually been watched).
+  useEffect(() => {
+    if (!session) {
+      setLastEpisodeId(null);
+      return;
+    }
+    let cancelled = false;
+
+    supabase
+      .from('watch_history')
+      .select('last_episode_id')
+      .eq('user_id', session.user.id)
+      .eq('drama_id', id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!cancelled) setLastEpisodeId(data?.last_episode_id ?? null);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [session, id]);
 
   if (dramaLoading || episodesLoading) return null;
 
@@ -58,12 +84,22 @@ export default function DramaDetailScreen() {
       return;
     }
 
-    if (session) {
-      recordWatchHistory(session.user.id, id, episode.id);
-    }
+    // No recordWatchHistory call here — watch/[dramaId].tsx now records it
+    // itself once this episode actually starts playing, not just because it
+    // was tapped/navigated to.
     router.push({
       pathname: '/watch/[dramaId]',
       params: { dramaId: id, startEpisodeId: episode.id },
+    });
+  }
+
+  // last_episode_id is set by the reel screen once playback actually starts,
+  // so this is a pure navigation — no recordWatchHistory call needed here.
+  function handleContinueWatching() {
+    if (!lastEpisodeId) return;
+    router.push({
+      pathname: '/watch/[dramaId]',
+      params: { dramaId: id, startEpisodeId: lastEpisodeId },
     });
   }
 
@@ -88,9 +124,18 @@ export default function DramaDetailScreen() {
                   />
                 )}
               </View>
-              <ThemedText type="title" style={styles.title}>
-                {drama.title}
-              </ThemedText>
+              <View style={styles.titleRow}>
+                <ThemedText type="title" style={styles.title}>
+                  {drama.title}
+                </ThemedText>
+                {lastEpisodeId && (
+                  <Pressable onPress={handleContinueWatching} style={styles.continueButton} hitSlop={4}>
+                    <ThemedText type="small" style={styles.continueButtonText} numberOfLines={1}>
+                      ▶ 이어서 보기
+                    </ThemedText>
+                  </Pressable>
+                )}
+              </View>
               <ThemedText type="small" themeColor="textSecondary">
                 {drama.genre} · {drama.episodeCount}화 (무료 {drama.freeEpisodeCount}화)
               </ThemedText>
@@ -170,9 +215,27 @@ const styles = StyleSheet.create({
     top: 0,
     left: 0,
   },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
   title: {
+    flexShrink: 1,
     fontSize: 24,
     lineHeight: 30,
+  },
+  continueButton: {
+    flexShrink: 0,
+    backgroundColor: ACCENT,
+    borderRadius: Spacing.five,
+    paddingHorizontal: Spacing.three,
+    paddingVertical: Spacing.one,
+  },
+  continueButtonText: {
+    color: '#ffffff',
+    fontWeight: '700',
   },
   episodeRow: {
     flexDirection: 'row',

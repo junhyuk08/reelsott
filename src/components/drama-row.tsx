@@ -10,16 +10,12 @@ const CARD_WIDTH = 140;
 
 type DramaRowProps = {
   title: string;
-  // lastEpisodeId is optional because most rows (top10/trending/new) use
-  // plain Drama[] — only the continue-watching row's WatchHistoryDrama[]
-  // actually has it, which is what gates the "이어서 보기" button per card.
-  data: (Drama & { lastEpisodeId?: string | null })[];
+  data: Drama[];
   onPressDrama: (dramaId: string) => void;
   favoriteIds: Set<string>;
   onToggleFavorite?: (dramaId: string) => void;
   onSeeAll?: () => void;
   showRank?: boolean;
-  onContinue?: (dramaId: string) => void;
 };
 
 export function DramaRow({
@@ -30,7 +26,6 @@ export function DramaRow({
   onToggleFavorite,
   onSeeAll,
   showRank,
-  onContinue,
 }: DramaRowProps) {
   return (
     <ThemedView style={styles.section}>
@@ -55,7 +50,6 @@ export function DramaRow({
               isFavorite={favoriteIds.has(drama.id)}
               onToggleFavorite={onToggleFavorite ? () => onToggleFavorite(drama.id) : undefined}
               rank={showRank ? index + 1 : undefined}
-              onContinue={onContinue && drama.lastEpisodeId ? () => onContinue(drama.id) : undefined}
             />
           </View>
         ))}

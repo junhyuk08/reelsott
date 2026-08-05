@@ -31,12 +31,15 @@ export default function RecommendScreen() {
 
   const viewabilityConfig = useRef({ itemVisiblePercentThreshold: 80 }).current;
 
-  function handleContinue(dramaId: string, episodeId: string) {
+  function handleContinue(dramaId: string) {
     if (!isLoggedIn || !session) {
       router.push('/login');
       return;
     }
-    recordWatchHistory(session.user.id, dramaId, episodeId);
+    // No episodeId here — this only opens the synopsis page, it doesn't
+    // start playback. last_episode_id gets set by watch/[dramaId].tsx once
+    // an episode the user picks there actually starts playing.
+    recordWatchHistory(session.user.id, dramaId);
     router.push({ pathname: '/drama/[id]', params: { id: dramaId } });
   }
 
@@ -78,7 +81,7 @@ export default function RecommendScreen() {
             isFocused={index === focusedIndex}
             isFavorite={favoriteIds.has(item.dramaId)}
             onToggleFavorite={() => toggleFavorite(item.dramaId)}
-            onContinue={() => handleContinue(item.dramaId, item.episodeId)}
+            onContinue={() => handleContinue(item.dramaId)}
           />
         )}
       />
