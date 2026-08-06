@@ -9,7 +9,7 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useDrama } from '@/hooks/use-dramas';
-import { EPISODE_COIN_COST, useEpisodes, type Episode } from '@/hooks/use-episodes';
+import { EPISODE_COIN_COST, getLockReason, useEpisodes, type Episode } from '@/hooks/use-episodes';
 import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
 import { incrementViewCount } from '@/lib/dramas';
@@ -72,15 +72,16 @@ export default function DramaDetailScreen() {
 
   const freeEpisodeCount = drama.freeEpisodeCount;
 
-  function isLocked(episode: Episode) {
-    return episode.episodeNumber > freeEpisodeCount && !unlockedIds.has(episode.id);
-  }
-
   function handlePressEpisode(episode: Episode) {
     if (!episode.videoUrl) return;
 
-    if (isLocked(episode) && !isLoggedIn) {
-      Alert.alert('로그인이 필요합니다.');
+    const lockReason = getLockReason(episode, { freeEpisodeCount, unlockedIds, isLoggedIn });
+
+    if (lockReason === 'login') {
+      Alert.alert('로그인이 필요합니다', '2화부터는 로그인 후 시청할 수 있어요.', [
+        { text: '취소', style: 'cancel' },
+        { text: '로그인하기', onPress: () => router.push('/login') },
+      ]);
       return;
     }
 
@@ -147,7 +148,7 @@ export default function DramaDetailScreen() {
             </ThemedText>
           }
           renderItem={({ item: episode, index }) => {
-            const locked = isLocked(episode);
+            const lockReason = getLockReason(episode, { freeEpisodeCount, unlockedIds, isLoggedIn });
             return (
               <View
                 style={[
@@ -156,7 +157,13 @@ export default function DramaDetailScreen() {
                   index === 0 && styles.episodeRowFirst,
                 ]}>
                 <ThemedText type="default">{episode.episodeNumber}화</ThemedText>
-                {locked ? (
+                {lockReason === 'login' ? (
+                  <Pressable onPress={() => handlePressEpisode(episode)} style={styles.lockButton}>
+                    <ThemedText type="small" themeColor="textSecondary">
+                      🔒 로그인이 필요합니다
+                    </ThemedText>
+                  </Pressable>
+                ) : lockReason === 'coin' ? (
                   <Pressable onPress={() => handlePressEpisode(episode)} style={styles.lockButton}>
                     <ThemedText type="small" themeColor="textSecondary">
                       🔒 {EPISODE_COIN_COST}코인으로 잠금 해제

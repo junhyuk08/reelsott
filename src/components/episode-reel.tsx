@@ -1,11 +1,12 @@
 import { useEventListener } from 'expo';
+import { useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Alert, Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
-import { EPISODE_COIN_COST, type Episode } from '@/hooks/use-episodes';
+import { EPISODE_COIN_COST, type Episode, type LockReason } from '@/hooks/use-episodes';
 
 type UnlockResult = { success: true; coinBalance: number } | { success: false; error: string };
 
@@ -13,7 +14,7 @@ type EpisodeReelProps = {
   episode: Episode;
   height: number;
   isFocused: boolean;
-  isLocked: boolean;
+  lockReason: LockReason;
   onUnlock: () => Promise<UnlockResult>;
   onFinish: () => void;
   onPlaybackStart?: () => void;
@@ -23,11 +24,13 @@ export function EpisodeReel({
   episode,
   height,
   isFocused,
-  isLocked,
+  lockReason,
   onUnlock,
   onFinish,
   onPlaybackStart,
 }: EpisodeReelProps) {
+  const router = useRouter();
+  const isLocked = lockReason !== null;
   const [unlocking, setUnlocking] = useState(false);
   const player = useVideoPlayer(episode.videoUrl, (player) => {
     player.loop = false;
@@ -51,6 +54,24 @@ export function EpisodeReel({
     }
   }, [isFocused, isLocked, player]);
 
+  // Pops the login prompt the moment a guest scrolls/autoplays into episode
+  // 2+, not just when they tap the locked button — alertedRef guards against
+  // re-firing on every re-render while this reel stays focused, but still
+  // fires again each time the user swipes back into this episode.
+  const alertedRef = useRef(false);
+  useEffect(() => {
+    if (isFocused && lockReason === 'login') {
+      if (alertedRef.current) return;
+      alertedRef.current = true;
+      Alert.alert('로그인이 필요합니다', '2화부터는 로그인 후 시청할 수 있어요.', [
+        { text: '취소', style: 'cancel' },
+        { text: '로그인하기', onPress: () => router.push('/login') },
+      ]);
+    } else if (!isFocused) {
+      alertedRef.current = false;
+    }
+  }, [isFocused, lockReason, router]);
+
   async function handleUnlock() {
     setUnlocking(true);
     try {
@@ -66,7 +87,17 @@ export function EpisodeReel({
     }
   }
 
-  if (isLocked) {
+  if (lockReason === 'login') {
+    return (
+      <View style={[styles.item, { height }]}>
+        <Pressable onPress={() => router.push('/login')} style={styles.unlockButton}>
+          <ThemedText style={styles.unlockText}>🔒 로그인이 필요합니다</ThemedText>
+        </Pressable>
+      </View>
+    );
+  }
+
+  if (lockReason === 'coin') {
     return (
       <View style={[styles.item, { height }]}>
         <Pressable onPress={handleUnlock} disabled={unlocking} style={styles.unlockButton}>

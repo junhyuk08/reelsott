@@ -9,13 +9,13 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useDrama } from '@/hooks/use-dramas';
-import { useEpisodes, type Episode } from '@/hooks/use-episodes';
+import { getLockReason, useEpisodes, type Episode } from '@/hooks/use-episodes';
 import { useSession } from '@/hooks/use-session';
 import { recordWatchHistory } from '@/lib/watch-history';
 
 export default function WatchDramaScreen() {
   const { dramaId, startEpisodeId } = useLocalSearchParams<{ dramaId: string; startEpisodeId?: string }>();
-  const { session } = useSession();
+  const { session, isLoggedIn } = useSession();
   const { height } = useWindowDimensions();
   const { drama, loading: dramaLoading, error: dramaError } = useDrama(dramaId);
   const {
@@ -111,7 +111,7 @@ export default function WatchDramaScreen() {
             episode={item}
             height={height}
             isFocused={index === (focusedIndex ?? initialIndex)}
-            isLocked={item.episodeNumber > freeEpisodeCount && !unlockedIds.has(item.id)}
+            lockReason={getLockReason(item, { freeEpisodeCount, unlockedIds, isLoggedIn })}
             onUnlock={() => unlockEpisode(item.id)}
             onFinish={handleFinish}
             onPlaybackStart={() => handlePlaybackStart(item.id)}
