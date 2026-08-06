@@ -13,12 +13,12 @@ type HomeHeaderProps = {
   onLogoPress?: () => void;
 };
 
+// Nickname/email greeting removed — 마이페이지 탭에 이미 로그인 정보가 있어서,
+// 이 바는 비회원에게 로그인/회원가입만 노출하고 로그인 상태에선 조용히 있는다.
 export function HomeHeader({ onLogoPress }: HomeHeaderProps) {
   const theme = useTheme();
   const router = useRouter();
-  const { session, isLoggedIn } = useSession();
-
-  const displayName = (session?.user.user_metadata?.nickname as string | undefined) ?? session?.user.email;
+  const { isLoggedIn } = useSession();
 
   return (
     <View style={styles.container}>
@@ -32,13 +32,7 @@ export function HomeHeader({ onLogoPress }: HomeHeaderProps) {
         </ThemedText>
       </Pressable>
 
-      {isLoggedIn ? (
-        <View style={styles.loggedInArea}>
-          <ThemedText type="small" themeColor="textSecondary" numberOfLines={1} style={styles.greeting}>
-            {displayName}님
-          </ThemedText>
-        </View>
-      ) : (
+      {!isLoggedIn && (
         <View style={styles.authButtons}>
           <Pressable onPress={() => router.push('/login')} style={[styles.pillButton, { borderColor: theme.backgroundSelected }]}>
             <ThemedText type="small" themeColor="text">
@@ -75,15 +69,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: Spacing.one,
     flexShrink: 0,
-  },
-  loggedInArea: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    flexShrink: 1,
-  },
-  greeting: {
-    flexShrink: 1,
   },
   pillButton: {
     borderWidth: 1,
