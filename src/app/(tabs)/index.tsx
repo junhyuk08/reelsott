@@ -81,6 +81,10 @@ export default function HomeScreen() {
                 onPressDrama={handlePressDrama}
                 favoriteIds={favoriteIds}
                 onToggleFavorite={isLoggedIn ? toggleFavorite : undefined}
+                // Trending is just the head of the same view-count ranking
+                // top-dramas shows in full, so "see all" here reuses that
+                // screen instead of duplicating the list.
+                onSeeAll={() => router.push('/top-dramas')}
               />
             )}
             {newDramas.length > 0 && (
