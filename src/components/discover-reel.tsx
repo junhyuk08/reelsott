@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useEffect, useRef, useState } from 'react';
@@ -68,7 +69,7 @@ export function DiscoverReel({ item, height, isFocused, isFavorite, onToggleFavo
       <Pressable style={StyleSheet.absoluteFill} onPress={() => setMuted((current) => !current)} />
 
       <Animated.View style={[styles.muteBadge, { opacity: muteHintOpacity }]} pointerEvents="none">
-        <ThemedText style={styles.muteGlyph}>{muted ? '🔇' : '🔊'}</ThemedText>
+        <Ionicons name={muted ? 'volume-mute' : 'volume-high'} size={16} color="#ffffff" />
       </Animated.View>
 
       <LinearGradient
@@ -92,13 +93,18 @@ export function DiscoverReel({ item, height, isFocused, isFavorite, onToggleFavo
           <Pressable
             onPress={onToggleFavorite}
             hitSlop={8}
-            style={({ pressed }) => [styles.favoriteButton, pressed && styles.pressedShrink]}>
-            <ThemedText style={[styles.favoriteGlyph, isFavorite && styles.favoriteGlyphActive]}>
-              {isFavorite ? '♥' : '♡'}
-            </ThemedText>
+            style={({ pressed }) => [styles.iconButton, pressed && styles.pressedShrink]}>
+            <Ionicons
+              name={isFavorite ? 'heart' : 'heart-outline'}
+              size={24}
+              color={isFavorite ? ACCENT : '#ffffff'}
+            />
           </Pressable>
-          <Pressable onPress={onContinue} style={({ pressed }) => [styles.continueButton, pressed && styles.pressedShrink]}>
-            <ThemedText style={styles.continueText}>이어서 보기</ThemedText>
+          <Pressable
+            onPress={onContinue}
+            hitSlop={8}
+            style={({ pressed }) => [styles.iconButton, styles.continueButton, pressed && styles.pressedShrink]}>
+            <Ionicons name="play" size={22} color="#ffffff" style={styles.playGlyph} />
           </Pressable>
         </View>
       </View>
@@ -135,9 +141,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  muteGlyph: {
-    fontSize: 16,
   },
   overlay: {
     position: 'absolute',
@@ -181,7 +184,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
   },
-  favoriteButton: {
+  // Both action buttons share the same 48x48 circular footprint so the
+  // favorite and continue-watching controls line up cleanly as a pair.
+  iconButton: {
     width: 48,
     height: 48,
     borderRadius: 24,
@@ -189,17 +194,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  favoriteGlyph: {
-    color: '#ffffff',
-    fontSize: 26,
-  },
-  favoriteGlyphActive: {
-    color: ACCENT,
-  },
   continueButton: {
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.five,
     backgroundColor: ACCENT,
     shadowColor: ACCENT,
     shadowOffset: { width: 0, height: 4 },
@@ -207,9 +202,9 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 6,
   },
-  continueText: {
-    color: '#ffffff',
-    fontWeight: '700',
+  playGlyph: {
+    // Optically centers the play triangle, which otherwise reads left-heavy.
+    marginLeft: 3,
   },
   pressedShrink: {
     transform: [{ scale: 0.92 }],

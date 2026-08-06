@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useEventListener } from 'expo';
 import { Redirect } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -53,7 +54,7 @@ function AdVideoOverlay({ url, onEarned, onClose }: { url: string; onEarned: () 
       <VideoView player={player} style={styles.adVideoPlayer} nativeControls={false} contentFit="contain" />
       {finished && (
         <Pressable onPress={onClose} style={styles.adVideoCloseButton} hitSlop={8}>
-          <ThemedText style={styles.adVideoCloseText}>✕</ThemedText>
+          <Ionicons name="close" size={20} color="#ffffff" />
         </Pressable>
       )}
     </View>
@@ -222,9 +223,11 @@ export default function CheckinScreen() {
                       checked && styles.dayCircleChecked,
                       isToday && !checked && styles.dayCircleToday,
                     ]}>
-                    <ThemedText type="smallBold" style={checked ? styles.dayGlyphChecked : undefined}>
-                      {checked ? '✓' : date.getDate()}
-                    </ThemedText>
+                    {checked ? (
+                      <Ionicons name="checkmark" size={16} color="#ffffff" />
+                    ) : (
+                      <ThemedText type="smallBold">{date.getDate()}</ThemedText>
+                    )}
                   </ThemedView>
                 </ThemedView>
               );
@@ -332,9 +335,6 @@ const styles = StyleSheet.create({
     backgroundColor: ACCENT,
     borderWidth: 0,
   },
-  dayGlyphChecked: {
-    color: '#ffffff',
-  },
   streakText: {
     textAlign: 'center',
     marginTop: Spacing.four,
@@ -393,10 +393,5 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  adVideoCloseText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
   },
 });

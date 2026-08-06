@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import type { Drama } from '@/components/drama-card';
@@ -5,6 +6,7 @@ import { DramaCard } from '@/components/drama-card';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 
 const CARD_WIDTH = 140;
 
@@ -27,6 +29,8 @@ export function DramaRow({
   onSeeAll,
   showRank,
 }: DramaRowProps) {
+  const theme = useTheme();
+
   return (
     <ThemedView style={styles.section}>
       <View style={styles.header}>
@@ -34,10 +38,11 @@ export function DramaRow({
           {title}
         </ThemedText>
         {onSeeAll && (
-          <Pressable onPress={onSeeAll} hitSlop={8}>
+          <Pressable onPress={onSeeAll} hitSlop={8} style={styles.seeAllButton}>
             <ThemedText type="small" themeColor="textSecondary">
-              전체보기 &gt;
+              전체보기
             </ThemedText>
+            <Ionicons name="chevron-forward" size={14} color={theme.textSecondary} />
           </Pressable>
         )}
       </View>
@@ -72,6 +77,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     lineHeight: 24,
+  },
+  seeAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.half,
   },
   rowContent: {
     paddingHorizontal: Spacing.three,

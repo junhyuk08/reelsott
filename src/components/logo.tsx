@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
@@ -13,7 +14,7 @@ export function Logo({ onPress }: LogoProps) {
   const content = (
     <View style={styles.container}>
       <View style={styles.badge}>
-        <ThemedText style={styles.badgeGlyph}>▶</ThemedText>
+        <Ionicons name="play" size={12} color="#ffffff" />
       </View>
       <ThemedText style={styles.wordmark}>
         <ThemedText style={styles.wordmarkAccent}>reels</ThemedText>ott
@@ -39,10 +40,6 @@ const styles = StyleSheet.create({
     backgroundColor: ACCENT,
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  badgeGlyph: {
-    color: '#ffffff',
-    fontSize: 12,
   },
   wordmark: {
     fontSize: 20,

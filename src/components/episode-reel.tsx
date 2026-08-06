@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useEventListener } from 'expo';
 import { useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
@@ -91,7 +92,8 @@ export function EpisodeReel({
     return (
       <View style={[styles.item, { height }]}>
         <Pressable onPress={() => router.push('/login')} style={styles.unlockButton}>
-          <ThemedText style={styles.unlockText}>🔒 로그인이 필요합니다</ThemedText>
+          <Ionicons name="lock-closed" size={14} color="#ffffff" />
+          <ThemedText style={styles.unlockText}>로그인이 필요합니다</ThemedText>
         </Pressable>
       </View>
     );
@@ -101,8 +103,9 @@ export function EpisodeReel({
     return (
       <View style={[styles.item, { height }]}>
         <Pressable onPress={handleUnlock} disabled={unlocking} style={styles.unlockButton}>
+          {!unlocking && <Ionicons name="lock-closed" size={14} color="#ffffff" />}
           <ThemedText style={styles.unlockText}>
-            {unlocking ? '해제 중...' : `🔒 ${EPISODE_COIN_COST}코인으로 잠금 해제`}
+            {unlocking ? '해제 중...' : `${EPISODE_COIN_COST}코인으로 잠금 해제`}
           </ThemedText>
         </Pressable>
       </View>
@@ -136,6 +139,9 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   unlockButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
     backgroundColor: 'rgba(0, 0, 0, 0.6)',
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.two,

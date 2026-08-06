@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -64,9 +65,7 @@ function FaqRow({ item, expanded, onPress }: { item: FaqItem; expanded: boolean;
         <ThemedText type="small" style={styles.faqQuestionText}>
           {item.question}
         </ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {expanded ? '−' : '+'}
-        </ThemedText>
+        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={theme.textSecondary} />
       </Pressable>
       {expanded && (
         <ThemedText

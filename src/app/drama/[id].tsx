@@ -1,3 +1,4 @@
+import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -131,8 +132,9 @@ export default function DramaDetailScreen() {
                 </ThemedText>
                 {lastEpisodeId && (
                   <Pressable onPress={handleContinueWatching} style={styles.continueButton} hitSlop={4}>
+                    <Ionicons name="play" size={12} color="#ffffff" />
                     <ThemedText type="small" style={styles.continueButtonText} numberOfLines={1}>
-                      ▶ 이어서 보기
+                      이어서 보기
                     </ThemedText>
                   </Pressable>
                 )}
@@ -159,20 +161,23 @@ export default function DramaDetailScreen() {
                 <ThemedText type="default">{episode.episodeNumber}화</ThemedText>
                 {lockReason === 'login' ? (
                   <Pressable onPress={() => handlePressEpisode(episode)} style={styles.lockButton}>
+                    <Ionicons name="lock-closed" size={12} color={theme.textSecondary} />
                     <ThemedText type="small" themeColor="textSecondary">
-                      🔒 로그인이 필요합니다
+                      로그인이 필요합니다
                     </ThemedText>
                   </Pressable>
                 ) : lockReason === 'coin' ? (
                   <Pressable onPress={() => handlePressEpisode(episode)} style={styles.lockButton}>
+                    <Ionicons name="lock-closed" size={12} color={theme.textSecondary} />
                     <ThemedText type="small" themeColor="textSecondary">
-                      🔒 {EPISODE_COIN_COST}코인으로 잠금 해제
+                      {EPISODE_COIN_COST}코인으로 잠금 해제
                     </ThemedText>
                   </Pressable>
                 ) : episode.videoUrl ? (
                   <Pressable onPress={() => handlePressEpisode(episode)} style={styles.playButton}>
+                    <Ionicons name="play" size={12} color="#ffffff" />
                     <ThemedText type="small" style={styles.playButtonText}>
-                      ▶ 재생
+                      재생
                     </ThemedText>
                   </Pressable>
                 ) : (
@@ -235,6 +240,9 @@ const styles = StyleSheet.create({
   },
   continueButton: {
     flexShrink: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.half,
     backgroundColor: ACCENT,
     borderRadius: Spacing.five,
     paddingHorizontal: Spacing.three,
@@ -256,10 +264,16 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
   },
   lockButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.half,
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.one,
   },
   playButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.half,
     backgroundColor: ACCENT,
     borderRadius: Spacing.five,
     paddingHorizontal: Spacing.three,
