@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
+import { BackButton } from '@/components/back-button';
 import { SessionProvider, useSession } from '@/hooks/use-session';
 import { initAds } from '@/lib/init-ads';
 
@@ -26,12 +27,24 @@ function RootLayoutContent() {
   return (
     <>
       <AnimatedSplashOverlay ready={!loading} />
-      <Stack screenOptions={{ headerShown: false }}>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          // react-native-screens' native-stack renders the default back
+          // chevron as a masked bitmap image, which doesn't reliably render
+          // on web (shows up invisible/low-contrast) — using our own
+          // BackButton keeps every header's back affordance consistent and
+          // guaranteed visible across platforms.
+          headerLeft: () => <BackButton />,
+          headerBackTitle: '',
+        }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="login" />
         <Stack.Screen name="signup" />
         <Stack.Screen name="drama/[id]" />
         <Stack.Screen name="watch/[dramaId]" />
+        <Stack.Screen name="account" options={{ headerShown: true, title: '계정 관리' }} />
+        <Stack.Screen name="delete-account" options={{ headerShown: true, title: '회원탈퇴' }} />
         <Stack.Screen name="favorites" options={{ headerShown: true, title: '찜한 작품' }} />
         <Stack.Screen name="watch-history" options={{ headerShown: true, title: '시청기록' }} />
         <Stack.Screen name="new-dramas" options={{ headerShown: true, title: '새로운 드라마' }} />

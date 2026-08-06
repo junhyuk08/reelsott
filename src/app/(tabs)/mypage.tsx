@@ -1,7 +1,8 @@
+import { Ionicons } from '@expo/vector-icons';
 import Constants from 'expo-constants';
 import { Redirect, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -16,27 +17,44 @@ const APP_VERSION = Constants.expoConfig?.version ?? '0.0.0';
 
 type MenuItem = {
   label: string;
-  href: '/favorites' | '/watch-history' | '/notification-settings' | '/support' | '/notices' | '/terms' | null;
+  href:
+    | '/favorites'
+    | '/watch-history'
+    | '/notification-settings'
+    | '/support'
+    | '/notices'
+    | '/terms'
+    | '/account'
+    | null;
 };
 
-const MENU_ITEMS: MenuItem[] = [
+// Grouped into "my activity" vs "service info" sections instead of one flat
+// list, per feedback that the old single list felt undifferentiated.
+const USAGE_MENU_ITEMS: MenuItem[] = [
   { label: '찜한 작품', href: '/favorites' },
   { label: '시청기록', href: '/watch-history' },
   { label: '구독 관리', href: null },
   { label: '알림 설정', href: '/notification-settings' },
+];
+
+const SERVICE_MENU_ITEMS: MenuItem[] = [
   { label: '고객센터', href: '/support' },
   { label: '공지사항', href: '/notices' },
   { label: '이용약관', href: '/terms' },
 ];
 
-async function extractErrorMessage(error: unknown, fallback: string) {
-  const context = (error as { context?: Response })?.context;
-  try {
-    const body = await context?.json();
-    return typeof body?.error === 'string' ? body.error : fallback;
-  } catch {
-    return fallback;
-  }
+function MenuRow({ item, isFirst, theme }: { item: MenuItem; isFirst: boolean; theme: ReturnType<typeof useTheme> }) {
+  const router = useRouter();
+
+  return (
+    <Pressable
+      disabled={!item.href}
+      onPress={() => item.href && router.push(item.href)}
+      style={[styles.menuRow, { borderTopColor: theme.backgroundSelected }, isFirst && styles.menuRowFirst]}>
+      <ThemedText type="default">{item.label}</ThemedText>
+      {item.href && <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} />}
+    </Pressable>
+  );
 }
 
 export default function MyPageScreen() {
@@ -46,10 +64,6 @@ export default function MyPageScreen() {
 
   const [coinBalance, setCoinBalance] = useState(0);
   const [nickname, setNickname] = useState<string | null>(null);
-  const [showDeleteForm, setShowDeleteForm] = useState(false);
-  const [deletePassword, setDeletePassword] = useState('');
-  const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
 
   // Refetches every time this tab regains focus (not just on mount) so the
   // coin balance reflects spends/earns made on other screens (check-in, ad
@@ -86,33 +100,6 @@ export default function MyPageScreen() {
   const displayNickname = nickname ?? (session?.user.user_metadata?.nickname as string | undefined) ?? '회원';
   const email = session?.user.email ?? '';
 
-  async function handleLogout() {
-    await supabase.auth.signOut();
-  }
-
-  async function handleDeleteAccount() {
-    if (!deletePassword) {
-      setDeleteError('비밀번호를 입력해주세요.');
-      return;
-    }
-
-    setDeleteError(null);
-    setDeleting(true);
-
-    const { data, error } = await supabase.functions.invoke('delete-account', {
-      body: { password: deletePassword },
-    });
-
-    if (error || !data?.success) {
-      setDeleting(false);
-      setDeleteError(await extractErrorMessage(error, '탈퇴 처리 중 오류가 발생했습니다.'));
-      return;
-    }
-
-    await supabase.auth.signOut();
-    router.replace('/login');
-  }
-
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.flex} edges={['top']}>
@@ -123,7 +110,7 @@ export default function MyPageScreen() {
 
           <ThemedView type="backgroundElement" style={styles.profileCard}>
             <ThemedView style={styles.avatar}>
-              <ThemedText style={styles.avatarGlyph}>👤</ThemedText>
+              <Ionicons name="person" size={24} color="#ffffff" />
             </ThemedView>
             <ThemedView type="backgroundElement" style={styles.profileText}>
               <ThemedText type="smallBold">{displayNickname}</ThemedText>
@@ -148,68 +135,27 @@ export default function MyPageScreen() {
             </Pressable>
           </ThemedView>
 
+          <ThemedText type="small" themeColor="textSecondary" style={styles.sectionLabel}>
+            이용 정보
+          </ThemedText>
           <ThemedView style={styles.menuList}>
-            {MENU_ITEMS.map((item, index) => (
-              <Pressable
-                key={item.label}
-                disabled={!item.href}
-                onPress={() => item.href && router.push(item.href)}
-                style={[
-                  styles.menuRow,
-                  { borderTopColor: theme.backgroundSelected },
-                  index === 0 && styles.menuRowFirst,
-                ]}>
-                <ThemedText type="default">{item.label}</ThemedText>
-                {item.href && (
-                  <ThemedText type="default" themeColor="textSecondary">
-                    ›
-                  </ThemedText>
-                )}
-              </Pressable>
+            {USAGE_MENU_ITEMS.map((item, index) => (
+              <MenuRow key={item.label} item={item} isFirst={index === 0} theme={theme} />
             ))}
           </ThemedView>
 
-          <Pressable onPress={handleLogout} style={[styles.logoutButton, { borderColor: theme.backgroundSelected }]}>
-            <ThemedText type="default" themeColor="textSecondary">
-              로그아웃
-            </ThemedText>
-          </Pressable>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.sectionLabel}>
+            서비스 안내
+          </ThemedText>
+          <ThemedView style={styles.menuList}>
+            {SERVICE_MENU_ITEMS.map((item, index) => (
+              <MenuRow key={item.label} item={item} isFirst={index === 0} theme={theme} />
+            ))}
+          </ThemedView>
 
-          {showDeleteForm ? (
-            <ThemedView style={styles.deleteForm}>
-              <ThemedText type="small" themeColor="textSecondary">
-                계정을 삭제하려면 비밀번호를 입력해주세요. 이 작업은 되돌릴 수 없습니다.
-              </ThemedText>
-              <TextInput
-                style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
-                placeholder="비밀번호"
-                placeholderTextColor={theme.textSecondary}
-                value={deletePassword}
-                onChangeText={setDeletePassword}
-                secureTextEntry
-                autoComplete="current-password"
-              />
-              {deleteError && (
-                <ThemedText type="small" style={styles.deleteErrorText}>
-                  {deleteError}
-                </ThemedText>
-              )}
-              <Pressable
-                onPress={handleDeleteAccount}
-                disabled={deleting}
-                style={[styles.deleteConfirmButton, deleting && styles.disabled]}>
-                <ThemedText type="default" style={styles.deleteConfirmButtonText}>
-                  {deleting ? '탈퇴 처리 중...' : '확인 후 탈퇴'}
-                </ThemedText>
-              </Pressable>
-            </ThemedView>
-          ) : (
-            <Pressable onPress={() => setShowDeleteForm(true)} style={styles.deleteLink}>
-              <ThemedText type="small" themeColor="textSecondary">
-                회원탈퇴
-              </ThemedText>
-            </Pressable>
-          )}
+          <ThemedView style={styles.menuList}>
+            <MenuRow item={{ label: '계정 관리', href: '/account' }} isFirst theme={theme} />
+          </ThemedView>
 
           <ThemedText type="small" themeColor="textSecondary" style={styles.versionText}>
             v{APP_VERSION}
@@ -252,9 +198,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarGlyph: {
-    fontSize: 24,
-  },
   profileText: {
     gap: 2,
   },
@@ -280,9 +223,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
+  sectionLabel: {
+    marginHorizontal: Spacing.three,
+    marginTop: Spacing.five,
+    marginBottom: Spacing.one,
+  },
   menuList: {
     marginHorizontal: Spacing.three,
-    marginTop: Spacing.four,
   },
   menuRow: {
     flexDirection: 'row',
@@ -294,48 +241,8 @@ const styles = StyleSheet.create({
   menuRowFirst: {
     borderTopWidth: 0,
   },
-  logoutButton: {
-    marginHorizontal: Spacing.three,
-    marginTop: Spacing.four,
-    borderWidth: 1,
-    borderRadius: Spacing.three,
-    paddingVertical: Spacing.three,
-    alignItems: 'center',
-  },
-  deleteLink: {
-    marginTop: Spacing.four,
-    alignItems: 'center',
-  },
-  deleteForm: {
-    marginHorizontal: Spacing.three,
-    marginTop: Spacing.four,
-    gap: Spacing.two,
-  },
-  input: {
-    borderRadius: Spacing.three,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three - 1,
-    fontSize: 16,
-  },
-  deleteErrorText: {
-    color: '#D33',
-  },
-  deleteConfirmButton: {
-    backgroundColor: '#D33',
-    borderRadius: Spacing.three,
-    paddingVertical: Spacing.three,
-    alignItems: 'center',
-    marginTop: Spacing.one,
-  },
-  deleteConfirmButtonText: {
-    color: '#ffffff',
-    fontWeight: '700',
-  },
-  disabled: {
-    opacity: 0.5,
-  },
   versionText: {
     textAlign: 'center',
-    marginTop: Spacing.two,
+    marginTop: Spacing.five,
   },
 });
