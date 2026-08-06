@@ -10,6 +10,7 @@ import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
 import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
+import { getRpcErrorMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 
 const ACCENT = '#FF3B5C';
@@ -156,7 +157,7 @@ export default function CheckinScreen() {
     setSubmitting(false);
 
     if (rpcError) {
-      setError(rpcError.message);
+      setError(getRpcErrorMessage(rpcError, '출석체크에 실패했습니다. 잠시 후 다시 시도해주세요.'));
       return;
     }
 
@@ -183,7 +184,7 @@ export default function CheckinScreen() {
     setClaimingAd(false);
 
     if (rpcError) {
-      setAdError(rpcError.message);
+      setAdError(getRpcErrorMessage(rpcError, '보상 지급에 실패했습니다. 잠시 후 다시 시도해주세요.'));
       return;
     }
 

@@ -34,7 +34,9 @@ export default {
     const { error: deleteError } = await ctx.supabaseAdmin.auth.admin.deleteUser(userId)
 
     if (deleteError) {
-      return Response.json({ error: deleteError.message }, { status: 500 })
+      // GoTrue admin errors aren't meant for end users — never forward
+      // deleteError.message as-is.
+      return Response.json({ error: '탈퇴 처리 중 오류가 발생했습니다.' }, { status: 500 })
     }
 
     return Response.json({ success: true })

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 
 import { useSession } from '@/hooks/use-session';
+import { getRpcErrorMessage } from '@/lib/errors';
 import { supabase } from '@/lib/supabase';
 
 export const EPISODE_COIN_COST = 30;
@@ -66,7 +67,10 @@ export function useEpisodes(dramaId: string) {
     });
 
     if (rpcError) {
-      return { success: false as const, error: rpcError.message };
+      return {
+        success: false as const,
+        error: getRpcErrorMessage(rpcError, '잠금 해제에 실패했습니다. 잠시 후 다시 시도해주세요.'),
+      };
     }
 
     setUnlockedIds((prev) => new Set(prev).add(episodeId));
