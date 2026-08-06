@@ -31,11 +31,6 @@ function toKoreanError(code: string | undefined, fallback: string) {
   return (code && KNOWN_ERROR_MESSAGES[code]) || fallback;
 }
 
-type PasswordCheckResult = {
-  type: 'error' | 'success';
-  message: string;
-};
-
 export default function SignupScreen() {
   const theme = useTheme();
   const router = useRouter();
@@ -44,54 +39,31 @@ export default function SignupScreen() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [nickname, setNickname] = useState('');
+  const [nicknameError, setNicknameError] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [passwordCheck, setPasswordCheck] = useState<PasswordCheckResult | null>(null);
-  const [isPasswordVerified, setIsPasswordVerified] = useState(false);
 
-  function handlePasswordChange(text: string) {
-    setPassword(text);
-    setIsPasswordVerified(false);
-    setPasswordCheck(null);
-  }
-
-  function handleConfirmPasswordChange(text: string) {
-    setConfirmPassword(text);
-    setIsPasswordVerified(false);
-    setPasswordCheck(null);
-  }
-
-  function handleCheckPassword() {
-    if (!PASSWORD_REGEX.test(password)) {
-      setPasswordCheck({
-        type: 'error',
-        message: '비밀번호는 영문, 숫자, 특수문자(!@#$%^&*)를 포함해 8자 이상이어야 합니다.',
-      });
-      setIsPasswordVerified(false);
-      return;
-    }
-
-    if (password !== confirmPassword) {
-      setPasswordCheck({ type: 'error', message: '비밀번호가 일치하지 않습니다.' });
-      setIsPasswordVerified(false);
-      return;
-    }
-
-    setPasswordCheck({ type: 'success', message: '사용 가능한 비밀번호입니다.' });
-    setIsPasswordVerified(true);
-  }
+  // Validated live as each field changes, shown directly under that field —
+  // no separate "확인하기" button/step.
+  const passwordFormatError =
+    password.length > 0 && !PASSWORD_REGEX.test(password)
+      ? '영문, 숫자, 특수문자(!@#$%^&*)를 포함해 8자 이상이어야 합니다.'
+      : null;
+  const confirmPasswordError =
+    confirmPassword.length > 0 && password !== confirmPassword ? '비밀번호가 일치하지 않습니다.' : null;
 
   async function handleSignup() {
     const trimmedNickname = nickname.trim();
-
-    if (!isPasswordVerified) {
-      setError('비밀번호 확인하기 버튼을 먼저 눌러주세요.');
-      return;
-    }
+    setNicknameError(null);
 
     if (!email || !password || !confirmPassword || !trimmedNickname) {
       setError('모든 항목을 입력해주세요.');
+      return;
+    }
+
+    if (!PASSWORD_REGEX.test(password)) {
+      setError('비밀번호는 영문, 숫자, 특수문자(!@#$%^&*)를 포함해 8자 이상이어야 합니다.');
       return;
     }
 
@@ -110,13 +82,13 @@ export default function SignupScreen() {
 
     if (nicknameCheckError) {
       setSubmitting(false);
-      setError('닉네임 확인 중 오류가 발생했습니다. 다시 시도해주세요.');
+      setNicknameError('닉네임 확인 중 오류가 발생했습니다. 다시 시도해주세요.');
       return;
     }
 
     if (!nicknameAvailable) {
       setSubmitting(false);
-      setError(NICKNAME_TAKEN_MESSAGE);
+      setNicknameError(NICKNAME_TAKEN_MESSAGE);
       return;
     }
 
@@ -142,11 +114,13 @@ export default function SignupScreen() {
           p_nickname: trimmedNickname,
         });
         if (stillAvailable === false) {
-          setError(NICKNAME_TAKEN_MESSAGE);
+          setNicknameError(NICKNAME_TAKEN_MESSAGE);
           return;
         }
       }
-      setError(toKoreanError(signupError.code, signupError.message));
+      // Falls back to a generic message rather than signupError.message —
+      // that's Supabase's own internal wording and shouldn't reach the user.
+      setError(toKoreanError(signupError.code, '가입 처리 중 오류가 발생했습니다. 다시 시도해주세요.'));
       return;
     }
 
@@ -213,6 +187,11 @@ export default function SignupScreen() {
                 autoCapitalize="none"
                 maxLength={20}
               />
+              {nicknameError && (
+                <ThemedText type="small" style={styles.errorText}>
+                  {nicknameError}
+                </ThemedText>
+              )}
               <TextInput
                 style={[styles.input, { backgroundColor: theme.backgroundElement, color: theme.text }]}
                 placeholder="이메일"
@@ -229,12 +208,15 @@ export default function SignupScreen() {
                 placeholder="비밀번호"
                 placeholderTextColor={theme.textSecondary}
                 value={password}
-                onChangeText={handlePasswordChange}
+                onChangeText={setPassword}
                 secureTextEntry
                 autoComplete="password-new"
               />
-              <ThemedText type="small" themeColor="textSecondary" style={styles.hint}>
-                8자 이상, 영문 · 숫자 · 특수문자(!@#$%^&*) 포함
+              <ThemedText
+                type="small"
+                themeColor={passwordFormatError ? undefined : 'textSecondary'}
+                style={[styles.hint, passwordFormatError && styles.errorText]}>
+                {passwordFormatError ?? '8자 이상, 영문 · 숫자 · 특수문자(!@#$%^&*) 포함'}
               </ThemedText>
 
               <TextInput
@@ -242,22 +224,13 @@ export default function SignupScreen() {
                 placeholder="비밀번호 확인"
                 placeholderTextColor={theme.textSecondary}
                 value={confirmPassword}
-                onChangeText={handleConfirmPasswordChange}
+                onChangeText={setConfirmPassword}
                 secureTextEntry
                 autoComplete="password-new"
               />
-
-              <Pressable onPress={handleCheckPassword} style={styles.checkButton}>
-                <ThemedText type="smallBold" style={styles.checkButtonText}>
-                  비밀번호 확인하기
-                </ThemedText>
-              </Pressable>
-
-              {passwordCheck && (
-                <ThemedText
-                  type="small"
-                  style={passwordCheck.type === 'success' ? styles.successText : styles.errorText}>
-                  {passwordCheck.message}
+              {confirmPasswordError && (
+                <ThemedText type="small" style={styles.errorText}>
+                  {confirmPasswordError}
                 </ThemedText>
               )}
 
@@ -326,21 +299,6 @@ const styles = StyleSheet.create({
   hint: {
     marginTop: -Spacing.one,
     marginLeft: Spacing.half,
-  },
-  checkButton: {
-    borderWidth: 1.5,
-    borderColor: ACCENT,
-    borderRadius: Spacing.three,
-    paddingVertical: Spacing.three - 3,
-    marginTop: Spacing.half,
-  },
-  checkButtonText: {
-    color: ACCENT,
-    textAlign: 'center',
-  },
-  successText: {
-    color: '#1A8A3F',
-    textAlign: 'center',
   },
   errorText: {
     color: '#D33',
