@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, TouchableOpacity, View, type StyleProp, type Vie
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Spacing } from '@/constants/theme';
+import { getResizedImageUrl } from '@/lib/images';
 
 export type Drama = {
   id: string;
@@ -31,7 +32,7 @@ export function DramaCard({ drama, onPress, style, isFavorite, onToggleFavorite,
         <ThemedView type="backgroundElement" style={styles.thumbnail} />
         {drama.thumbnailUrl && (
           <Image
-            source={{ uri: drama.thumbnailUrl }}
+            source={{ uri: getResizedImageUrl(drama.thumbnailUrl, { width: 300, height: 450 }) ?? undefined }}
             style={[styles.thumbnail, styles.thumbnailOverlay]}
             contentFit="cover"
             transition={300}

@@ -14,6 +14,7 @@ import { EPISODE_COIN_COST, getLockReason, useEpisodes, type Episode } from '@/h
 import { useSession } from '@/hooks/use-session';
 import { useTheme } from '@/hooks/use-theme';
 import { incrementViewCount } from '@/lib/dramas';
+import { getResizedImageUrl } from '@/lib/images';
 import { supabase } from '@/lib/supabase';
 
 const ACCENT = '#FF3B5C';
@@ -119,7 +120,7 @@ export default function DramaDetailScreen() {
                 <ThemedView type="backgroundElement" style={styles.thumbnail} />
                 {drama.thumbnailUrl && (
                   <Image
-                    source={{ uri: drama.thumbnailUrl }}
+                    source={{ uri: getResizedImageUrl(drama.thumbnailUrl, { width: 800, height: 450 }) ?? undefined }}
                     style={[styles.thumbnail, styles.thumbnailOverlay]}
                     contentFit="cover"
                     transition={300}
