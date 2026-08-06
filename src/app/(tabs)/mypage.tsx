@@ -98,7 +98,6 @@ export default function MyPageScreen() {
   // nickname login); the JWT's user_metadata copy is just a same-value
   // snapshot from signup, used here only until the fetch above resolves.
   const displayNickname = nickname ?? (session?.user.user_metadata?.nickname as string | undefined) ?? '회원';
-  const email = session?.user.email ?? '';
 
   return (
     <ThemedView style={styles.container}>
@@ -114,9 +113,6 @@ export default function MyPageScreen() {
             </ThemedView>
             <ThemedView type="backgroundElement" style={styles.profileText}>
               <ThemedText type="smallBold">{displayNickname}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {email}
-              </ThemedText>
             </ThemedView>
           </ThemedView>
 
