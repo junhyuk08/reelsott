@@ -2,6 +2,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { useEffect, useRef, useState } from 'react';
 import { Animated, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { Spacing } from '@/constants/theme';
@@ -19,6 +20,11 @@ type DiscoverReelProps = {
 };
 
 export function DiscoverReel({ item, height, isFocused, isFavorite, onToggleFavorite, onContinue }: DiscoverReelProps) {
+  // pageHeight already subtracts the tab bar's height (which itself bakes in
+  // the bottom safe-area inset), but that's an indirect, estimate-prone path
+  // — reading the inset directly here guarantees the info block clears the
+  // home-indicator/gesture area regardless of any first-frame height drift.
+  const insets = useSafeAreaInsets();
   const [muted, setMuted] = useState(true);
   const muteHintOpacity = useRef(new Animated.Value(0)).current;
   const player = useVideoPlayer(item.videoUrl, (player) => {
@@ -72,7 +78,7 @@ export function DiscoverReel({ item, height, isFocused, isFavorite, onToggleFavo
         pointerEvents="none"
       />
 
-      <View style={styles.overlay} pointerEvents="box-none">
+      <View style={[styles.overlay, { paddingBottom: Spacing.five + insets.bottom }]} pointerEvents="box-none">
         <View style={styles.info} pointerEvents="none">
           <ThemedText numberOfLines={2} style={styles.title}>
             {item.title}
@@ -142,7 +148,6 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     justifyContent: 'space-between',
     paddingHorizontal: Spacing.three,
-    paddingBottom: Spacing.five,
     gap: Spacing.three,
   },
   info: {
